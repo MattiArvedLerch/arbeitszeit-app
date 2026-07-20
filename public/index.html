@@ -96,7 +96,7 @@
   }
   .app {
     width: 100%;
-    max-width: 560px;
+    max-width: 900px;
   }
   h1 {
     margin: 0 0 24px;
@@ -382,21 +382,47 @@
     color: var(--accent);
     margin-left: 4px;
   }
-  .surcharge-checks {
+  .ms-dropdown { position: relative; width: 100%; }
+  .ms-trigger {
+    width: 100%;
+    text-align: left;
+    padding: 4px 6px;
+    font-size: 0.85rem;
+    font-weight: 400;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-main);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .ms-panel {
+    position: fixed;
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    font-size: 0.78rem;
-    white-space: nowrap;
+    gap: 4px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    z-index: 100;
+    min-width: 170px;
+    font-size: 0.82rem;
   }
-  .surcharge-checks label {
+  .ms-panel label {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     margin: 0;
     color: var(--text);
+    white-space: nowrap;
+    cursor: pointer;
   }
-  .surcharge-checks input { width: auto; margin: 0; }
+  .ms-panel input { width: auto; margin: 0; }
   .checkbox-row {
     display: flex;
     align-items: center;

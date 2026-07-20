@@ -664,27 +664,92 @@
     overtime: 'surchargeOvertime',
   };
 
-  function surchargeChecksHtml(selectedTypes) {
-    const selected = new Set(selectedTypes);
-    return `<div class="surcharge-checks">${SURCHARGE_TYPES.map(
-      (type) =>
-        `<label><input type="checkbox" class="edit-surcharge" value="${type}"${
-          selected.has(type) ? ' checked' : ''
-        }>${t(SURCHARGE_LABEL_KEYS[type])}</label>`
-    ).join('')}</div>`;
+  // Closes every open surcharge dropdown panel (only one should ever be
+  // open at a time).
+  function closeAllSurchargeDropdowns() {
+    document.querySelectorAll('.ms-panel').forEach((panel) => {
+      panel.hidden = true;
+    });
+  }
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.ms-dropdown')) return;
+    closeAllSurchargeDropdowns();
+  });
+  window.addEventListener('scroll', closeAllSurchargeDropdowns, true);
+  window.addEventListener('resize', closeAllSurchargeDropdowns);
+
+  function updateSurchargeTriggerText(trigger, checkboxes) {
+    const labels = checkboxes.filter((cb) => cb.checked).map((cb) => cb.closest('label').textContent);
+    trigger.textContent = labels.length ? labels.join(', ') : t('surchargeNone');
   }
 
-  // "holiday" and "highHoliday" are tiers of the same thing (a day can't be
-  // both) - checking one unchecks the other so the sum stays sensible.
-  function wireSurchargeExclusivity(tr) {
-    const holidayBox = tr.querySelector('.edit-surcharge[value="holiday"]');
-    const highHolidayBox = tr.querySelector('.edit-surcharge[value="highHoliday"]');
+  // Builds a compact "dropdown that opens into a checkbox list" control -
+  // a native <select multiple> has poor discoverability (needs ctrl/cmd
+  // click), and a plain single-select can't represent combined surcharges.
+  // Panel uses position:fixed (viewport-relative) so it isn't clipped by
+  // the table's overflow-x:auto wrapper.
+  function buildSurchargeDropdown(container, selectedTypes) {
+    const selected = new Set(selectedTypes);
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'ms-dropdown';
+
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'ms-trigger';
+
+    const panel = document.createElement('div');
+    panel.className = 'ms-panel';
+    panel.hidden = true;
+
+    const checkboxes = SURCHARGE_TYPES.map((type) => {
+      const label = document.createElement('label');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.value = type;
+      cb.checked = selected.has(type);
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(t(SURCHARGE_LABEL_KEYS[type])));
+      panel.appendChild(label);
+      return cb;
+    });
+
+    // "holiday" and "highHoliday" are tiers of the same thing (a day can't
+    // be both) - checking one unchecks the other so the sum stays sensible.
+    const holidayBox = checkboxes.find((cb) => cb.value === 'holiday');
+    const highHolidayBox = checkboxes.find((cb) => cb.value === 'highHoliday');
     holidayBox.addEventListener('change', () => {
       if (holidayBox.checked) highHolidayBox.checked = false;
+      updateSurchargeTriggerText(trigger, checkboxes);
     });
     highHolidayBox.addEventListener('change', () => {
       if (highHolidayBox.checked) holidayBox.checked = false;
+      updateSurchargeTriggerText(trigger, checkboxes);
     });
+    checkboxes.forEach((cb) => {
+      if (cb !== holidayBox && cb !== highHolidayBox) {
+        cb.addEventListener('change', () => updateSurchargeTriggerText(trigger, checkboxes));
+      }
+    });
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const wasOpen = !panel.hidden;
+      closeAllSurchargeDropdowns();
+      if (wasOpen) return;
+      const rect = trigger.getBoundingClientRect();
+      panel.style.top = `${rect.bottom + 4}px`;
+      panel.style.left = `${rect.left}px`;
+      panel.hidden = false;
+    });
+
+    updateSurchargeTriggerText(trigger, checkboxes);
+
+    wrapper.appendChild(trigger);
+    wrapper.appendChild(panel);
+    container.appendChild(wrapper);
+
+    return checkboxes;
   }
 
   function renderRow(entry) {
@@ -723,7 +788,7 @@
       <td><input type="time" class="edit-end" value="${entry.end}"></td>
       <td class="num"><input type="number" class="edit-break" min="0" step="5" value="${entry.breakMinutes}"></td>
       <td class="num"></td>
-      <td>${surchargeChecksHtml(entry.surchargeTypes || [])}</td>
+      <td class="surcharge-cell"></td>
       <td>
         <div class="row-actions">
           <button class="save-edit-btn" title="${t('save')}">✓</button>
@@ -731,9 +796,9 @@
         </div>
       </td>
     `;
-    wireSurchargeExclusivity(tr);
+    const surchargeCheckboxes = buildSurchargeDropdown(tr.querySelector('.surcharge-cell'), entry.surchargeTypes || []);
     tr.querySelector('.save-edit-btn').addEventListener('click', async () => {
-      const surchargeTypes = Array.from(tr.querySelectorAll('.edit-surcharge:checked')).map((cb) => cb.value);
+      const surchargeTypes = surchargeCheckboxes.filter((cb) => cb.checked).map((cb) => cb.value);
       const body = {
         date: tr.querySelector('.edit-date').value,
         start: tr.querySelector('.edit-start').value,
