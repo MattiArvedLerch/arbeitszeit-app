@@ -69,7 +69,7 @@ window.i18n = (function () {
       thisMonth: 'Dieser Monat',
 
       notifyOnFinish: 'Browser-Benachrichtigung bei Feierabend',
-      notifyPermissionDenied: 'Benachrichtigungen wurden blockiert. Bitte in den Browser-Einstellungen erlauben.',
+      notifyPermissionDenied: 'Benachrichtigungen konnten nicht aktiviert werden. Manche Browser (u.a. Opera) fragen dafür auf unverschlüsselten Seiten wie dieser hier gar nicht erst nach. Bitte in den Website-Einstellungen deines Browsers manuell erlauben (z.B. über das Schloss-/Info-Symbol in der Adressleiste → Berechtigungen → Benachrichtigungen).',
 
       settingsSaved: 'Einstellungen gespeichert.',
       passwordChanged: 'Passwort geändert.',
@@ -161,7 +161,7 @@ window.i18n = (function () {
       thisMonth: 'This month',
 
       notifyOnFinish: 'Browser notification when workday ends',
-      notifyPermissionDenied: 'Notifications were blocked. Please allow them in your browser settings.',
+      notifyPermissionDenied: "Notifications couldn't be enabled. Some browsers (Opera included) won't even show a prompt on non-HTTPS pages like this one. Please allow it manually in your browser's site settings (e.g. via the lock/info icon in the address bar → Permissions → Notifications).",
 
       settingsSaved: 'Settings saved.',
       passwordChanged: 'Password changed.',

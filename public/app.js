@@ -159,6 +159,15 @@
       els.notifyToggle.checked = false;
       return;
     }
+    // Some Chromium-based browsers (Opera included) silently refuse to even
+    // show the permission prompt on insecure (non-HTTPS) origins, or once a
+    // site was denied before - requestPermission() then just resolves to
+    // 'denied' with no dialog. Skip the pointless call in the known case.
+    if (Notification.permission === 'denied') {
+      els.notifyToggle.checked = false;
+      showAlert(els.appAlert, t('notifyPermissionDenied'));
+      return;
+    }
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
       try {
