@@ -3,6 +3,9 @@ window.i18n = (function () {
 
   const translations = {
     de: {
+      appTitle: 'Arbeitszeit',
+      viewOnGithub: 'Quellcode auf GitHub',
+
       themeLight: 'Hell',
       themeDark: 'Dunkel',
       themePcb: 'Platine',
@@ -99,6 +102,9 @@ window.i18n = (function () {
       err_generic: 'Ein Fehler ist aufgetreten.',
     },
     en: {
+      appTitle: 'Worktime',
+      viewOnGithub: 'Source on GitHub',
+
       themeLight: 'Light',
       themeDark: 'Dark',
       themePcb: 'PCB',
@@ -237,6 +243,7 @@ window.i18n = (function () {
 
   function applyStaticTranslations() {
     document.documentElement.lang = currentLang;
+    document.title = t('appTitle');
     document.querySelectorAll('[data-i18n]').forEach((el) => {
       setFirstTextNode(el, t(el.getAttribute('data-i18n')));
     });
