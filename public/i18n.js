@@ -60,11 +60,21 @@ window.i18n = (function () {
       exportXml: 'XML exportieren',
       exportXlsx: 'Excel exportieren',
       deleteEntry: 'Löschen',
+      editEntry: 'Bearbeiten',
       confirmDeleteEntry: 'Diesen Eintrag wirklich löschen?',
+
+      overview: 'Übersicht',
+      overtimeBalance: 'Gleitzeitkonto',
+      thisWeek: 'Diese Woche',
+      thisMonth: 'Dieser Monat',
+
+      notifyOnFinish: 'Browser-Benachrichtigung bei Feierabend',
+      notifyPermissionDenied: 'Benachrichtigungen wurden blockiert. Bitte in den Browser-Einstellungen erlauben.',
 
       settingsSaved: 'Einstellungen gespeichert.',
       passwordChanged: 'Passwort geändert.',
       dayCompleted: 'Tag gespeichert: {duration} gearbeitet, {amount} verdient.',
+      entryUpdated: 'Eintrag aktualisiert.',
 
       err_invalid_username: 'Benutzername muss 3-32 Zeichen lang sein (Buchstaben, Zahlen, _ oder -).',
       err_invalid_password: 'Passwort muss mindestens 8 Zeichen lang sein.',
@@ -142,11 +152,21 @@ window.i18n = (function () {
       exportXml: 'Export XML',
       exportXlsx: 'Export Excel',
       deleteEntry: 'Delete',
+      editEntry: 'Edit',
       confirmDeleteEntry: 'Really delete this entry?',
+
+      overview: 'Overview',
+      overtimeBalance: 'Overtime balance',
+      thisWeek: 'This week',
+      thisMonth: 'This month',
+
+      notifyOnFinish: 'Browser notification when workday ends',
+      notifyPermissionDenied: 'Notifications were blocked. Please allow them in your browser settings.',
 
       settingsSaved: 'Settings saved.',
       passwordChanged: 'Password changed.',
       dayCompleted: 'Day saved: {duration} worked, {amount} earned.',
+      entryUpdated: 'Entry updated.',
 
       err_invalid_username: 'Username must be 3-32 characters (letters, numbers, _ or -).',
       err_invalid_password: 'Password must be at least 8 characters long.',

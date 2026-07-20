@@ -67,6 +67,20 @@ docker compose up -d --build
 Existing accounts and logs are preserved (data lives in the volume, not
 in the image).
 
+### Backups
+
+`scripts/backup-db.sh` copies the running container's `data/db.json`
+(password hashes + encrypted settings/log entries) to a timestamped file
+and keeps the newest 14 copies. Run it via cron on the host, e.g.:
+
+```cron
+0 3 * * * /home/<user>/arbeitszeit-app/scripts/backup-db.sh >> /home/<user>/arbeitszeit-app/backup.log 2>&1
+```
+
+Point `BACKUP_DIR` in the script at storage that is physically separate
+from the boot medium (e.g. an attached USB drive), so a corrupted SD card
+doesn't take out the backups with it.
+
 ## Usage
 
 - Registration is open: anyone with access to the app URL on the home

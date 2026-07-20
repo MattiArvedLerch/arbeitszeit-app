@@ -281,7 +281,7 @@
   .empty { color: var(--muted); font-size: 0.9rem; text-align: center; padding: 12px 0; }
   .export-row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
   .export-row button { flex: 1; min-width: 100px; }
-  .del-btn {
+  .del-btn, .edit-btn {
     background: none;
     border: none;
     color: var(--muted);
@@ -290,6 +290,44 @@
     padding: 2px 6px;
   }
   .del-btn:hover { color: var(--danger); }
+  .edit-btn:hover { color: var(--accent); }
+  .row-actions { display: flex; gap: 2px; justify-content: flex-end; white-space: nowrap; }
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .overview-stat { text-align: center; }
+  .overview-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .overview-value.positive { color: var(--accent-2); }
+  .overview-value.negative { color: var(--danger); }
+  .overview-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .edit-row input {
+    width: 100%;
+    padding: 4px 6px;
+    font-size: 0.85rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+  }
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+  .checkbox-row input { width: auto; margin: 0; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -400,6 +438,10 @@
             <input type="number" id="weeklyHours" min="1" step="0.5" value="40">
           </label>
         </fieldset>
+        <label class="checkbox-row">
+          <input type="checkbox" id="notifyToggle">
+          <span data-i18n="notifyOnFinish">Browser-Benachrichtigung bei Feierabend</span>
+        </label>
         <button id="saveSettingsBtn" class="block" data-i18n="saveSettings">Einstellungen speichern</button>
         <button id="startBtn" class="block secondary" style="margin-top:8px;" data-i18n="startWorkday">Arbeitstag starten</button>
       </section>
@@ -422,6 +464,25 @@
         <div class="big-money" id="earnedAmount">0,00 €</div>
         <div class="sub" id="breakNote"></div>
         <div class="sub"><span data-i18n="hourlyRate">Stundenlohn:</span> <span id="hourlyRate">–</span> €/h</div>
+      </section>
+
+      <!-- Übersicht: Gleitzeitkonto + Woche/Monat -->
+      <section class="card" id="overviewCard" hidden>
+        <h2 data-i18n="overview">Übersicht</h2>
+        <div class="overview-grid">
+          <div class="overview-stat">
+            <div class="overview-value" id="balanceValue">–</div>
+            <div class="overview-label" data-i18n="overtimeBalance">Gleitzeitkonto</div>
+          </div>
+          <div class="overview-stat">
+            <div class="overview-value" id="weekValue">–</div>
+            <div class="overview-label" data-i18n="thisWeek">Diese Woche</div>
+          </div>
+          <div class="overview-stat">
+            <div class="overview-value" id="monthValue">–</div>
+            <div class="overview-label" data-i18n="thisMonth">Dieser Monat</div>
+          </div>
+        </div>
       </section>
 
       <!-- Protokoll / Verlauf -->

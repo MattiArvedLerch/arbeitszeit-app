@@ -37,6 +37,7 @@
     weeklyHours: el('weeklyHours'),
     saveSettingsBtn: el('saveSettingsBtn'),
     startBtn: el('startBtn'),
+    notifyToggle: el('notifyToggle'),
 
     statusCard: el('statusCard'),
     countdown: el('countdown'),
@@ -50,6 +51,11 @@
     breakNote: el('breakNote'),
     hourlyRate: el('hourlyRate'),
 
+    overviewCard: el('overviewCard'),
+    balanceValue: el('balanceValue'),
+    weekValue: el('weekValue'),
+    monthValue: el('monthValue'),
+
     historyBody: el('historyBody'),
     historyEmpty: el('historyEmpty'),
     exportCsv: el('exportCsv'),
@@ -59,6 +65,7 @@
 
   let settings = null;
   let tickInterval = null;
+  let notifiedThisSession = false;
 
   async function api(path, options = {}) {
     const res = await fetch('/api' + path, {
@@ -129,6 +136,47 @@
 
   els.themeSelect.value = effectiveTheme();
   els.themeSelect.addEventListener('change', () => setTheme(els.themeSelect.value));
+
+  // --- Browser notification on Feierabend ---
+
+  const NOTIFY_KEY = 'arbeitszeit.notify';
+
+  function initNotifyToggle() {
+    els.notifyToggle.checked =
+      localStorage.getItem(NOTIFY_KEY) === '1' && 'Notification' in window && Notification.permission === 'granted';
+  }
+
+  els.notifyToggle.addEventListener('change', async () => {
+    if (!els.notifyToggle.checked) {
+      try {
+        localStorage.setItem(NOTIFY_KEY, '0');
+      } catch (e) {
+        /* ignore */
+      }
+      return;
+    }
+    if (!('Notification' in window)) {
+      els.notifyToggle.checked = false;
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      try {
+        localStorage.setItem(NOTIFY_KEY, '1');
+      } catch (e) {
+        /* ignore */
+      }
+    } else {
+      els.notifyToggle.checked = false;
+      showAlert(els.appAlert, t('notifyPermissionDenied'));
+    }
+  });
+
+  function maybeNotifyQuittingTime() {
+    if (localStorage.getItem(NOTIFY_KEY) !== '1') return;
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    new Notification(t('quittingTimeDone'), { body: els.feierabendTime.textContent });
+  }
 
   // --- Language ---
 
@@ -297,6 +345,7 @@
     els.statusCard.hidden = !active;
     els.earningsCard.hidden = !active;
     if (active) {
+      notifiedThisSession = false;
       startTicking();
     } else {
       stopTicking();
@@ -355,6 +404,11 @@
     els.countdown.classList.toggle('done', remaining <= 0);
     els.feierabendTime.textContent = feierabend.toLocaleTimeString(window.i18n.locale(), { hour: '2-digit', minute: '2-digit' });
 
+    if (remaining <= 0 && !notifiedThisSession) {
+      notifiedThisSession = true;
+      maybeNotifyQuittingTime();
+    }
+
     const totalWindowMs = durationMs + breakMs;
     const rawElapsedMs = Math.min(Math.max(now - startD, 0), totalWindowMs);
     const progressPct = totalWindowMs > 0 ? (rawElapsedMs / totalWindowMs) * 100 : 0;
@@ -390,32 +444,121 @@
     tickInterval = null;
   }
 
+  // --- Übersicht: Gleitzeitkonto + Woche/Monat ---
+
+  function startOfWeek(d) {
+    const date = new Date(d);
+    const dayIndex = (date.getDay() + 6) % 7; // 0 = Monday
+    date.setDate(date.getDate() - dayIndex);
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
+
+  function computeOverview(entries) {
+    const now = new Date();
+    const weekStart = startOfWeek(now);
+    const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    let balanceMinutes = 0;
+    let weekMinutes = 0;
+    let monthMinutes = 0;
+
+    for (const e of entries) {
+      const planned = e.plannedMinutes ?? e.workedMinutes;
+      balanceMinutes += e.workedMinutes - planned;
+
+      const entryDate = new Date(`${e.date}T00:00:00`);
+      if (entryDate >= weekStart) weekMinutes += e.workedMinutes;
+      if (e.date.startsWith(monthPrefix)) monthMinutes += e.workedMinutes;
+    }
+
+    return { balanceMinutes, weekMinutes, monthMinutes };
+  }
+
+  function renderOverview(entries) {
+    if (entries.length === 0) {
+      els.overviewCard.hidden = true;
+      return;
+    }
+    els.overviewCard.hidden = false;
+    const o = computeOverview(entries);
+
+    const sign = o.balanceMinutes >= 0 ? '+' : '−';
+    els.balanceValue.textContent = `${sign}${formatHM(Math.round(Math.abs(o.balanceMinutes)))}`;
+    els.balanceValue.className = 'overview-value ' + (o.balanceMinutes >= 0 ? 'positive' : 'negative');
+
+    els.weekValue.textContent = formatHM(o.weekMinutes);
+    els.monthValue.textContent = formatHM(o.monthMinutes);
+  }
+
   // --- History ---
+
+  function renderRow(entry) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${entry.date}</td>
+      <td>${entry.start}</td>
+      <td>${entry.end}</td>
+      <td class="num">${entry.breakMinutes} min</td>
+      <td class="num">${formatHM(entry.workedMinutes)}</td>
+      <td class="num">${formatMoney(entry.earnedAmount)}</td>
+      <td>
+        <div class="row-actions">
+          <button class="edit-btn" title="${t('editEntry')}" data-id="${entry.id}">✎</button>
+          <button class="del-btn" title="${t('deleteEntry')}" data-id="${entry.id}">✕</button>
+        </div>
+      </td>
+    `;
+    tr.querySelector('.edit-btn').addEventListener('click', () => startEditRow(tr, entry));
+    tr.querySelector('.del-btn').addEventListener('click', async () => {
+      if (!confirm(t('confirmDeleteEntry'))) return;
+      await api(`/worklog/${entry.id}`, { method: 'DELETE' });
+      loadHistory();
+    });
+    return tr;
+  }
+
+  function startEditRow(tr, entry) {
+    tr.innerHTML = `
+      <td><input type="date" class="edit-date" value="${entry.date}"></td>
+      <td><input type="time" class="edit-start" value="${entry.start}"></td>
+      <td><input type="time" class="edit-end" value="${entry.end}"></td>
+      <td class="num"><input type="number" class="edit-break" min="0" step="5" value="${entry.breakMinutes}"></td>
+      <td class="num" colspan="2"></td>
+      <td>
+        <div class="row-actions">
+          <button class="save-edit-btn" title="${t('save')}">✓</button>
+          <button class="cancel-edit-btn" title="${t('cancel')}">✕</button>
+        </div>
+      </td>
+    `;
+    tr.querySelector('.save-edit-btn').addEventListener('click', async () => {
+      const body = {
+        date: tr.querySelector('.edit-date').value,
+        start: tr.querySelector('.edit-start').value,
+        end: tr.querySelector('.edit-end').value,
+        breakMinutes: parseFloat(tr.querySelector('.edit-break').value) || 0,
+      };
+      clearAlert(els.appAlert);
+      try {
+        await api(`/worklog/${entry.id}`, { method: 'PATCH', body });
+        showAlert(els.appAlert, t('entryUpdated'), 'success');
+        loadHistory();
+      } catch (err) {
+        showError(els.appAlert, err);
+      }
+    });
+    tr.querySelector('.cancel-edit-btn').addEventListener('click', () => loadHistory());
+  }
 
   async function loadHistory() {
     const entries = await api('/worklog');
     els.historyBody.innerHTML = '';
     els.historyEmpty.hidden = entries.length > 0;
     for (const entry of entries) {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${entry.date}</td>
-        <td>${entry.start}</td>
-        <td>${entry.end}</td>
-        <td class="num">${entry.breakMinutes} min</td>
-        <td class="num">${formatHM(entry.workedMinutes)}</td>
-        <td class="num">${formatMoney(entry.earnedAmount)}</td>
-        <td><button class="del-btn" title="${t('deleteEntry')}" data-id="${entry.id}">✕</button></td>
-      `;
-      els.historyBody.appendChild(tr);
+      els.historyBody.appendChild(renderRow(entry));
     }
-    els.historyBody.querySelectorAll('.del-btn').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        if (!confirm(t('confirmDeleteEntry'))) return;
-        await api(`/worklog/${btn.dataset.id}`, { method: 'DELETE' });
-        loadHistory();
-      });
-    });
+    renderOverview(entries);
   }
 
   els.exportCsv.addEventListener('click', () => {
@@ -434,6 +577,7 @@
     els.authView.hidden = true;
     els.appView.hidden = false;
     els.currentUsername.textContent = username;
+    initNotifyToggle();
     settings = await api('/settings');
     fillSettingsForm(settings);
     renderWorkdayState();

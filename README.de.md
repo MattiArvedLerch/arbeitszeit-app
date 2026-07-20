@@ -69,6 +69,21 @@ docker compose up -d --build
 Bestehende Accounts und Protokolle bleiben dabei erhalten (Daten liegen im
 Volume, nicht im Image).
 
+### Backups
+
+`scripts/backup-db.sh` kopiert die `data/db.json` (Passwort-Hashes +
+verschlüsselte Einstellungen/Log-Einträge) des laufenden Containers in eine
+Datei mit Zeitstempel und behält die neuesten 14 Kopien. Per Cronjob auf
+dem Host ausführen, z.B.:
+
+```cron
+0 3 * * * /home/<user>/arbeitszeit-app/scripts/backup-db.sh >> /home/<user>/arbeitszeit-app/backup.log 2>&1
+```
+
+`BACKUP_DIR` im Skript sollte auf ein physisch getrenntes Speichermedium
+zeigen (z.B. eine angeschlossene USB-Platte), damit eine defekte SD-Karte
+nicht auch die Backups mitreißt.
+
 ## Nutzung
 
 - Registrierung ist offen: jeder mit Zugriff auf die App-URL im Heimnetz

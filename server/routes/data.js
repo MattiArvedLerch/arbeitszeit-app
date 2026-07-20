@@ -97,6 +97,12 @@ router.post('/workday/cancel', (req, res) => {
   });
 });
 
+function hourlyRateFor(settings) {
+  return settings.salaryType === 'yearly'
+    ? settings.salaryAmount / (settings.weeklyHours * 52)
+    : settings.salaryAmount / (settings.weeklyHours * 4.33);
+}
+
 router.post('/workday/finish', (req, res) => {
   const db = readDb();
   const settings = getDecryptedSettings(db, req.userId, req.dek);
@@ -107,12 +113,7 @@ router.post('/workday/finish', (req, res) => {
   const endTime = typeof req.body.endTime === 'string' ? req.body.endTime : nowHHMM();
   const { date, start } = settings.active;
   const workedMinutes = computeWorkedMinutes(date, start, endTime, settings.breakStart, settings.breakMinutes);
-
-  const hourlyRate =
-    settings.salaryType === 'yearly'
-      ? settings.salaryAmount / (settings.weeklyHours * 52)
-      : settings.salaryAmount / (settings.weeklyHours * 4.33);
-  const earnedAmount = Math.round(hourlyRate * (workedMinutes / 60) * 100) / 100;
+  const earnedAmount = Math.round(hourlyRateFor(settings) * (workedMinutes / 60) * 100) / 100;
 
   const entry = {
     date,
@@ -120,6 +121,7 @@ router.post('/workday/finish', (req, res) => {
     end: endTime,
     breakMinutes: settings.breakMinutes,
     workedMinutes,
+    plannedMinutes: Math.round(settings.duration * 60),
     earnedAmount,
   };
 
@@ -152,6 +154,56 @@ function listEntries(db, userId, dek) {
 router.get('/worklog', (req, res) => {
   const db = readDb();
   res.json(listEntries(db, req.userId, req.dek));
+});
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE = /^\d{2}:\d{2}$/;
+
+router.patch('/worklog/:id', (req, res) => {
+  const body = req.body || {};
+  const date = body.date;
+  const start = body.start;
+  const end = body.end;
+  const breakMinutes = Number(body.breakMinutes);
+
+  if (!DATE_RE.test(date) || !TIME_RE.test(start) || !TIME_RE.test(end)) {
+    return res.status(400).json({ error: 'invalid_request' });
+  }
+  if (!Number.isFinite(breakMinutes) || breakMinutes < 0 || breakMinutes > 480) {
+    return res.status(400).json({ error: 'invalid_break_minutes' });
+  }
+
+  mutate((mutableDb) => {
+    const logs = mutableDb.data[req.userId].logs;
+    const idx = logs.findIndex((l) => l.id === req.params.id);
+    if (idx === -1) return null;
+
+    const settings = getDecryptedSettings(mutableDb, req.userId, req.dek);
+    const existing = cryptoUtil.decryptJson(logs[idx], req.dek);
+    const workedMinutes = computeWorkedMinutes(date, start, end, start, breakMinutes);
+    const earnedAmount = Math.round(hourlyRateFor(settings) * (workedMinutes / 60) * 100) / 100;
+
+    const entry = {
+      date,
+      start,
+      end,
+      breakMinutes,
+      workedMinutes,
+      plannedMinutes: existing.plannedMinutes,
+      earnedAmount,
+    };
+
+    logs[idx] = {
+      id: logs[idx].id,
+      createdAt: logs[idx].createdAt,
+      ...cryptoUtil.encryptJson(entry, req.dek),
+    };
+
+    return { id: logs[idx].id, ...entry };
+  }).then((updated) => {
+    if (!updated) return res.status(404).json({ error: 'not_found' });
+    res.json(updated);
+  });
 });
 
 router.delete('/worklog/:id', (req, res) => {
