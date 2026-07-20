@@ -84,3 +84,7 @@ Volume, nicht im Image).
 - Sprache (DE/EN) und Theme (Hell/Dunkel/Platine) lassen sich oben über die
   zwei Auswahlfelder umschalten; die Wahl wird pro Browser gespeichert und
   gilt auch schon auf dem Login-Bildschirm.
+
+## Lizenz
+
+MIT, siehe [LICENSE](LICENSE).

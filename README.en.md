@@ -82,3 +82,7 @@ in the image).
 - Language (DE/EN) and theme (Light/Dark/PCB) can be switched using the
   two dropdowns at the top; the choice is saved per browser and already
   applies on the login screen.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
