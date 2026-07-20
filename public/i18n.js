@@ -59,6 +59,7 @@ window.i18n = (function () {
       exportCsv: 'CSV exportieren',
       exportXml: 'XML exportieren',
       exportXlsx: 'Excel exportieren',
+      excludeEarningsExport: 'Verdienst im Export ausblenden',
       deleteEntry: 'Löschen',
       editEntry: 'Bearbeiten',
       confirmDeleteEntry: 'Diesen Eintrag wirklich löschen?',
@@ -70,6 +71,9 @@ window.i18n = (function () {
 
       notifyOnFinish: 'Browser-Benachrichtigung bei Feierabend',
       notifyPermissionDenied: 'Benachrichtigungen konnten nicht aktiviert werden. Manche Browser (u.a. Opera) fragen dafür auf unverschlüsselten Seiten wie dieser hier gar nicht erst nach. Bitte in den Website-Einstellungen deines Browsers manuell erlauben (z.B. über das Schloss-/Info-Symbol in der Adressleiste → Berechtigungen → Benachrichtigungen).',
+
+      hideMoney: 'Verdienst ausblenden',
+      showMoney: 'Verdienst einblenden',
 
       settingsSaved: 'Einstellungen gespeichert.',
       passwordChanged: 'Passwort geändert.',
@@ -151,6 +155,7 @@ window.i18n = (function () {
       exportCsv: 'Export CSV',
       exportXml: 'Export XML',
       exportXlsx: 'Export Excel',
+      excludeEarningsExport: 'Exclude earnings from export',
       deleteEntry: 'Delete',
       editEntry: 'Edit',
       confirmDeleteEntry: 'Really delete this entry?',
@@ -162,6 +167,9 @@ window.i18n = (function () {
 
       notifyOnFinish: 'Browser notification when workday ends',
       notifyPermissionDenied: "Notifications couldn't be enabled. Some browsers (Opera included) won't even show a prompt on non-HTTPS pages like this one. Please allow it manually in your browser's site settings (e.g. via the lock/info icon in the address bar → Permissions → Notifications).",
+
+      hideMoney: 'Hide earnings',
+      showMoney: 'Show earnings',
 
       settingsSaved: 'Settings saved.',
       passwordChanged: 'Password changed.',

@@ -50,6 +50,7 @@
     earnedAmount: el('earnedAmount'),
     breakNote: el('breakNote'),
     hourlyRate: el('hourlyRate'),
+    toggleMoneyBtn: el('toggleMoneyBtn'),
 
     overviewCard: el('overviewCard'),
     balanceValue: el('balanceValue'),
@@ -61,6 +62,7 @@
     exportCsv: el('exportCsv'),
     exportXml: el('exportXml'),
     exportXlsx: el('exportXlsx'),
+    excludeEarningsExport: el('excludeEarningsExport'),
   };
 
   let settings = null;
@@ -137,6 +139,46 @@
   els.themeSelect.value = effectiveTheme();
   els.themeSelect.addEventListener('change', () => setTheme(els.themeSelect.value));
 
+  // --- Hide/show earnings (privacy) ---
+
+  const MONEY_HIDDEN_KEY = 'arbeitszeit.hideMoney';
+  const MASK = '••••••';
+
+  const EYE_OPEN_SVG =
+    '<svg viewBox="0 0 24 16" width="20" height="14"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M12 1C5 1 0 8 0 8s5 7 12 7 12-7 12-7-5-7-12-7zm0 10a3 3 0 100-6 3 3 0 000 6zm0-2a1 1 0 110-2 1 1 0 010 2z"/></svg>';
+  const EYE_CLOSED_SVG =
+    '<svg viewBox="0 0 24 16" width="20" height="14"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M12 1C5 1 0 8 0 8s5 7 12 7 12-7 12-7-5-7-12-7zm0 10a3 3 0 100-6 3 3 0 000 6zm0-2a1 1 0 110-2 1 1 0 010 2z"/><line x1="1" y1="1" x2="23" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+
+  let moneyHidden = false;
+  try {
+    moneyHidden = localStorage.getItem(MONEY_HIDDEN_KEY) === '1';
+  } catch (e) {
+    /* ignore */
+  }
+
+  function renderMoneyToggle() {
+    els.toggleMoneyBtn.innerHTML = moneyHidden ? EYE_CLOSED_SVG : EYE_OPEN_SVG;
+    els.toggleMoneyBtn.title = moneyHidden ? t('showMoney') : t('hideMoney');
+  }
+
+  function maskMoney(formatted) {
+    return moneyHidden ? MASK : formatted;
+  }
+
+  els.toggleMoneyBtn.addEventListener('click', () => {
+    moneyHidden = !moneyHidden;
+    try {
+      localStorage.setItem(MONEY_HIDDEN_KEY, moneyHidden ? '1' : '0');
+    } catch (e) {
+      /* ignore */
+    }
+    renderMoneyToggle();
+    tick();
+    if (!els.appView.hidden) loadHistory();
+  });
+
+  renderMoneyToggle();
+
   // --- Browser notification on Feierabend ---
 
   const NOTIFY_KEY = 'arbeitszeit.notify';
@@ -193,6 +235,7 @@
   els.langSelect.addEventListener('change', () => window.i18n.setLang(els.langSelect.value));
 
   document.addEventListener('i18n:change', () => {
+    renderMoneyToggle();
     tick();
     if (!els.appView.hidden) loadHistory();
   });
@@ -343,7 +386,7 @@
     await loadHistory();
     showAlert(
       els.appAlert,
-      t('dayCompleted', { duration: formatHM(entry.workedMinutes), amount: formatMoney(entry.earnedAmount) }),
+      t('dayCompleted', { duration: formatHM(entry.workedMinutes), amount: maskMoney(formatMoney(entry.earnedAmount)) }),
       'success'
     );
   });
@@ -438,8 +481,9 @@
 
     const rate = hourlyRateFor(settings);
     const earned = rate * (workedMs / 3600000);
-    els.earnedAmount.textContent = formatMoney(earned);
-    els.hourlyRate.textContent = rate.toFixed(2);
+    els.earnedAmount.textContent = maskMoney(formatMoney(earned));
+    els.earnedAmount.classList.toggle('masked', moneyHidden);
+    els.hourlyRate.textContent = maskMoney(rate.toFixed(2));
   }
 
   function startTicking() {
@@ -510,7 +554,7 @@
       <td>${entry.end}</td>
       <td class="num">${entry.breakMinutes} min</td>
       <td class="num">${formatHM(entry.workedMinutes)}</td>
-      <td class="num">${formatMoney(entry.earnedAmount)}</td>
+      <td class="num${moneyHidden ? ' masked' : ''}">${maskMoney(formatMoney(entry.earnedAmount))}</td>
       <td>
         <div class="row-actions">
           <button class="edit-btn" title="${t('editEntry')}" data-id="${entry.id}">✎</button>
@@ -570,14 +614,19 @@
     renderOverview(entries);
   }
 
+  function exportUrl(format) {
+    const hideEarnings = els.excludeEarningsExport.checked ? '1' : '0';
+    return `/api/export?format=${format}&lang=${window.i18n.getLang()}&hideEarnings=${hideEarnings}`;
+  }
+
   els.exportCsv.addEventListener('click', () => {
-    window.location.href = `/api/export?format=csv&lang=${window.i18n.getLang()}`;
+    window.location.href = exportUrl('csv');
   });
   els.exportXml.addEventListener('click', () => {
-    window.location.href = `/api/export?format=xml&lang=${window.i18n.getLang()}`;
+    window.location.href = exportUrl('xml');
   });
   els.exportXlsx.addEventListener('click', () => {
-    window.location.href = `/api/export?format=xlsx&lang=${window.i18n.getLang()}`;
+    window.location.href = exportUrl('xlsx');
   });
 
   // --- Bootstrap ---

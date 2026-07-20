@@ -61,18 +61,15 @@ function csvEscape(value) {
   return str;
 }
 
-function buildCsv(entries, lang) {
+function buildCsv(entries, lang, hideEarnings) {
   const L = labelsFor(lang);
-  const header = [L.date, L.start, L.end, L.breakMin, L.workedHours, L.workedMin, L.earnings];
-  const rows = entries.map((e) => [
-    e.date,
-    e.start,
-    e.end,
-    e.breakMinutes,
-    formatHours(e.workedMinutes),
-    e.workedMinutes,
-    e.earnedAmount.toFixed(2),
-  ]);
+  const header = [L.date, L.start, L.end, L.breakMin, L.workedHours, L.workedMin];
+  if (!hideEarnings) header.push(L.earnings);
+  const rows = entries.map((e) => {
+    const row = [e.date, e.start, e.end, e.breakMinutes, formatHours(e.workedMinutes), e.workedMinutes];
+    if (!hideEarnings) row.push(e.earnedAmount.toFixed(2));
+    return row;
+  });
   const lines = [header, ...rows].map((row) => row.map(csvEscape).join(';'));
   // UTF-8 BOM so Excel renders umlauts correctly.
   return '﻿' + lines.join('\r\n') + '\r\n';
@@ -88,7 +85,7 @@ function xmlEscape(value) {
   }[c]));
 }
 
-function buildXml(entries, username, lang) {
+function buildXml(entries, username, lang, hideEarnings) {
   const L = labelsFor(lang);
   const items = entries
     .map(
@@ -97,15 +94,16 @@ function buildXml(entries, username, lang) {
     <${L.xmlStart}>${xmlEscape(e.start)}</${L.xmlStart}>
     <${L.xmlEnd}>${xmlEscape(e.end)}</${L.xmlEnd}>
     <${L.xmlBreakMin}>${e.breakMinutes}</${L.xmlBreakMin}>
-    <${L.xmlWorkedMin}>${e.workedMinutes}</${L.xmlWorkedMin}>
-    <${L.xmlEarnings}>${e.earnedAmount.toFixed(2)}</${L.xmlEarnings}>
+    <${L.xmlWorkedMin}>${e.workedMinutes}</${L.xmlWorkedMin}>${
+        hideEarnings ? '' : `\n    <${L.xmlEarnings}>${e.earnedAmount.toFixed(2)}</${L.xmlEarnings}>`
+      }
   </${L.xmlEntry}>`
     )
     .join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<${L.xmlRoot} ${L.xmlUser}="${xmlEscape(username)}">\n${items}\n</${L.xmlRoot}>\n`;
 }
 
-async function buildXlsx(entries, username, lang, res) {
+async function buildXlsx(entries, username, lang, hideEarnings, res) {
   const L = labelsFor(lang);
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'Arbeitszeit-App';
@@ -121,7 +119,7 @@ async function buildXlsx(entries, username, lang, res) {
     { header: L.end, key: 'end', width: 10 },
     { header: L.breakMin, key: 'breakMinutes', width: 13 },
     { header: L.workedHours, key: 'workedHours', width: 16 },
-    { header: L.earnings, key: 'earnedAmount', width: 16 },
+    ...(hideEarnings ? [] : [{ header: L.earnings, key: 'earnedAmount', width: 16 }]),
   ];
 
   sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
@@ -138,29 +136,31 @@ async function buildXlsx(entries, username, lang, res) {
   for (const e of entries) {
     totalMinutes += e.workedMinutes;
     totalEarned += e.earnedAmount;
-    const row = sheet.addRow({
+    const rowData = {
       date: e.date,
       start: e.start,
       end: e.end,
       breakMinutes: e.breakMinutes,
       workedHours: e.workedMinutes / 60,
-      earnedAmount: e.earnedAmount,
-    });
+    };
+    if (!hideEarnings) rowData.earnedAmount = e.earnedAmount;
+    const row = sheet.addRow(rowData);
     row.getCell('workedHours').numFmt = '0.00 "h"';
-    row.getCell('earnedAmount').numFmt = '#,##0.00 "€"';
+    if (!hideEarnings) row.getCell('earnedAmount').numFmt = '#,##0.00 "€"';
   }
 
-  const totalsRow = sheet.addRow({
+  const totalsData = {
     date: L.sum,
     start: '',
     end: '',
     breakMinutes: '',
     workedHours: totalMinutes / 60,
-    earnedAmount: totalEarned,
-  });
+  };
+  if (!hideEarnings) totalsData.earnedAmount = totalEarned;
+  const totalsRow = sheet.addRow(totalsData);
   totalsRow.font = { bold: true };
   totalsRow.getCell('workedHours').numFmt = '0.00 "h"';
-  totalsRow.getCell('earnedAmount').numFmt = '#,##0.00 "€"';
+  if (!hideEarnings) totalsRow.getCell('earnedAmount').numFmt = '#,##0.00 "€"';
 
   sheet.eachRow((row) => {
     row.eachCell((cell) => {

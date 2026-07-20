@@ -142,6 +142,24 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
   }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .card-header h2 { margin: 0; }
+  .icon-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    padding: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+  }
+  .icon-btn:hover { color: var(--accent); }
+  .masked { letter-spacing: 2px; }
   label {
     display: block;
     font-size: 0.85rem;
@@ -460,7 +478,10 @@
 
       <!-- Verdienst -->
       <section class="card" id="earningsCard" hidden>
-        <h2 data-i18n="earningsToday">Verdienst heute</h2>
+        <div class="card-header">
+          <h2 data-i18n="earningsToday">Verdienst heute</h2>
+          <button type="button" class="icon-btn" id="toggleMoneyBtn"></button>
+        </div>
         <div class="big-money" id="earnedAmount">0,00 €</div>
         <div class="sub" id="breakNote"></div>
         <div class="sub"><span data-i18n="hourlyRate">Stundenlohn:</span> <span id="hourlyRate">–</span> €/h</div>
@@ -506,6 +527,10 @@
         </div>
         <div class="empty" id="historyEmpty" hidden data-i18n="noEntries">Noch keine Einträge.</div>
 
+        <label class="checkbox-row" style="margin-top:14px;margin-bottom:0;">
+          <input type="checkbox" id="excludeEarningsExport">
+          <span data-i18n="excludeEarningsExport">Verdienst im Export ausblenden</span>
+        </label>
         <div class="export-row">
           <button class="secondary" id="exportCsv" data-i18n="exportCsv">CSV exportieren</button>
           <button class="secondary" id="exportXml" data-i18n="exportXml">XML exportieren</button>
