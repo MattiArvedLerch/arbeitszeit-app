@@ -8,10 +8,10 @@ const {
   getDecryptedSettings,
   saveSettings,
   hourlyRateFor,
-  applySurcharge,
+  applySurcharges,
+  normalizeSurchargeTypes,
   startWorkday,
   finishWorkday,
-  SURCHARGE_TYPES,
 } = require('../workday');
 
 const router = express.Router();
@@ -39,6 +39,7 @@ router.put('/settings', (req, res) => {
   const sundaySurchargePercent = Number(body.sundaySurchargePercent);
   const holidaySurchargePercent = Number(body.holidaySurchargePercent);
   const highHolidaySurchargePercent = Number(body.highHolidaySurchargePercent);
+  const overtimeSurchargePercent = Number(body.overtimeSurchargePercent);
 
   if (!Number.isFinite(duration) || duration < 0 || duration > 24) {
     return res.status(400).json({ error: 'invalid_duration' });
@@ -56,7 +57,8 @@ router.put('/settings', (req, res) => {
     !isValidPercent(nightSurchargePercent) ||
     !isValidPercent(sundaySurchargePercent) ||
     !isValidPercent(holidaySurchargePercent) ||
-    !isValidPercent(highHolidaySurchargePercent)
+    !isValidPercent(highHolidaySurchargePercent) ||
+    !isValidPercent(overtimeSurchargePercent)
   ) {
     return res.status(400).json({ error: 'invalid_surcharge_percent' });
   }
@@ -75,6 +77,7 @@ router.put('/settings', (req, res) => {
       sundaySurchargePercent,
       holidaySurchargePercent,
       highHolidaySurchargePercent,
+      overtimeSurchargePercent,
     };
     saveSettings(mutableDb, req.userId, req.dek, next);
   }).then(() => {
@@ -118,7 +121,13 @@ router.post('/workday/finish', (req, res) => {
 function listEntries(db, userId, dek) {
   const logs = (db.data[userId] && db.data[userId].logs) || [];
   return logs
-    .map((rec) => ({ id: rec.id, createdAt: rec.createdAt, ...cryptoUtil.decryptJson(rec, dek) }))
+    .map((rec) => {
+      const entry = { id: rec.id, createdAt: rec.createdAt, ...cryptoUtil.decryptJson(rec, dek) };
+      // Backward compat: older entries stored a single surchargeType string.
+      entry.surchargeTypes = normalizeSurchargeTypes(entry.surchargeTypes ?? entry.surchargeType);
+      delete entry.surchargeType;
+      return entry;
+    })
     .sort((a, b) => (a.date + a.start > b.date + b.start ? -1 : 1));
 }
 
@@ -136,7 +145,7 @@ router.patch('/worklog/:id', (req, res) => {
   const start = body.start;
   const end = body.end;
   const breakMinutes = Number(body.breakMinutes);
-  const surchargeType = SURCHARGE_TYPES.includes(body.surchargeType) ? body.surchargeType : 'none';
+  const surchargeTypes = normalizeSurchargeTypes(body.surchargeTypes);
 
   if (!DATE_RE.test(date) || !TIME_RE.test(start) || !TIME_RE.test(end)) {
     return res.status(400).json({ error: 'invalid_request' });
@@ -162,8 +171,8 @@ router.patch('/worklog/:id', (req, res) => {
       breakMinutes,
       workedMinutes,
       plannedMinutes: existing.plannedMinutes,
-      surchargeType,
-      earnedAmount: applySurcharge(baseAmount, settings, surchargeType),
+      surchargeTypes,
+      earnedAmount: applySurcharges(baseAmount, settings, surchargeTypes),
     };
 
     logs[idx] = {

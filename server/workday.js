@@ -18,9 +18,17 @@ const DEFAULT_SETTINGS = {
   sundaySurchargePercent: 50,
   holidaySurchargePercent: 125,
   highHolidaySurchargePercent: 150,
+  // Not covered by § 3b EStG (no tax-free allowance for overtime) and not a
+  // general statutory entitlement either - purely a Tarifvertrag/contract
+  // matter. 25% is a commonly seen default for the first overtime hours.
+  overtimeSurchargePercent: 25,
 };
 
-const SURCHARGE_TYPES = ['none', 'night', 'sunday', 'holiday', 'highHoliday'];
+// Independent, combinable surcharge categories - percentages add up rather
+// than compound (e.g. night + holiday = nightPercent + holidayPercent),
+// matching how §3b EStG and most collective agreements define concurrent
+// surcharges (a holiday night is night% + holiday%, not (1+night%)*(1+holiday%)).
+const SURCHARGE_TYPES = ['night', 'sunday', 'holiday', 'highHoliday', 'overtime'];
 
 function surchargePercentFor(settings, surchargeType) {
   switch (surchargeType) {
@@ -32,14 +40,27 @@ function surchargePercentFor(settings, surchargeType) {
       return settings.holidaySurchargePercent;
     case 'highHoliday':
       return settings.highHolidaySurchargePercent;
+    case 'overtime':
+      return settings.overtimeSurchargePercent;
     default:
       return 0;
   }
 }
 
-function applySurcharge(baseAmount, settings, surchargeType) {
-  const percent = surchargePercentFor(settings, surchargeType);
-  return Math.round(baseAmount * (1 + percent / 100) * 100) / 100;
+function normalizeSurchargeTypes(value) {
+  if (Array.isArray(value)) {
+    return value.filter((type) => SURCHARGE_TYPES.includes(type));
+  }
+  // Backward compatibility with the earlier single-select surchargeType field.
+  if (typeof value === 'string' && SURCHARGE_TYPES.includes(value)) {
+    return [value];
+  }
+  return [];
+}
+
+function applySurcharges(baseAmount, settings, surchargeTypes) {
+  const totalPercent = surchargeTypes.reduce((sum, type) => sum + surchargePercentFor(settings, type), 0);
+  return Math.round(baseAmount * (1 + totalPercent / 100) * 100) / 100;
 }
 
 function getDecryptedSettings(db, userId, dek) {
@@ -84,8 +105,8 @@ function finishWorkday(mutableDb, userId, dek, endTime) {
     breakMinutes: settings.breakMinutes,
     workedMinutes,
     plannedMinutes: Math.round(settings.duration * 60),
-    surchargeType: 'none',
-    earnedAmount: applySurcharge(baseAmount, settings, 'none'),
+    surchargeTypes: [],
+    earnedAmount: applySurcharges(baseAmount, settings, []),
   };
 
   const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -108,7 +129,8 @@ module.exports = {
   getDecryptedSettings,
   saveSettings,
   hourlyRateFor,
-  applySurcharge,
+  applySurcharges,
+  normalizeSurchargeTypes,
   startWorkday,
   finishWorkday,
 };

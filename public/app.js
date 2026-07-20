@@ -49,6 +49,7 @@
     sundaySurchargePercent: el('sundaySurchargePercent'),
     holidaySurchargePercent: el('holidaySurchargePercent'),
     highHolidaySurchargePercent: el('highHolidaySurchargePercent'),
+    overtimeSurchargePercent: el('overtimeSurchargePercent'),
     saveSettingsBtn: el('saveSettingsBtn'),
     startBtn: el('startBtn'),
     notifyToggle: el('notifyToggle'),
@@ -434,6 +435,7 @@
     els.sundaySurchargePercent.value = s.sundaySurchargePercent;
     els.holidaySurchargePercent.value = s.holidaySurchargePercent;
     els.highHolidaySurchargePercent.value = s.highHolidaySurchargePercent;
+    els.overtimeSurchargePercent.value = s.overtimeSurchargePercent;
     setSalaryType(s.salaryType);
     if (!s.active) {
       const now = new Date();
@@ -453,6 +455,7 @@
       sundaySurchargePercent: parseFloat(els.sundaySurchargePercent.value) || 0,
       holidaySurchargePercent: parseFloat(els.holidaySurchargePercent.value) || 0,
       highHolidaySurchargePercent: parseFloat(els.highHolidaySurchargePercent.value) || 0,
+      overtimeSurchargePercent: parseFloat(els.overtimeSurchargePercent.value) || 0,
     };
   }
 
@@ -652,25 +655,43 @@
 
   // --- History ---
 
-  const SURCHARGE_TYPES = ['none', 'night', 'sunday', 'holiday', 'highHoliday'];
+  const SURCHARGE_TYPES = ['night', 'sunday', 'holiday', 'highHoliday', 'overtime'];
   const SURCHARGE_LABEL_KEYS = {
-    none: 'surchargeNone',
     night: 'surchargeNight',
     sunday: 'surchargeSunday',
     holiday: 'surchargeHoliday',
     highHoliday: 'surchargeHighHoliday',
+    overtime: 'surchargeOvertime',
   };
 
-  function surchargeOptionsHtml(selected) {
-    return SURCHARGE_TYPES.map(
-      (type) => `<option value="${type}"${type === selected ? ' selected' : ''}>${t(SURCHARGE_LABEL_KEYS[type])}</option>`
-    ).join('');
+  function surchargeChecksHtml(selectedTypes) {
+    const selected = new Set(selectedTypes);
+    return `<div class="surcharge-checks">${SURCHARGE_TYPES.map(
+      (type) =>
+        `<label><input type="checkbox" class="edit-surcharge" value="${type}"${
+          selected.has(type) ? ' checked' : ''
+        }>${t(SURCHARGE_LABEL_KEYS[type])}</label>`
+    ).join('')}</div>`;
+  }
+
+  // "holiday" and "highHoliday" are tiers of the same thing (a day can't be
+  // both) - checking one unchecks the other so the sum stays sensible.
+  function wireSurchargeExclusivity(tr) {
+    const holidayBox = tr.querySelector('.edit-surcharge[value="holiday"]');
+    const highHolidayBox = tr.querySelector('.edit-surcharge[value="highHoliday"]');
+    holidayBox.addEventListener('change', () => {
+      if (holidayBox.checked) highHolidayBox.checked = false;
+    });
+    highHolidayBox.addEventListener('change', () => {
+      if (highHolidayBox.checked) holidayBox.checked = false;
+    });
   }
 
   function renderRow(entry) {
-    const surchargeType = entry.surchargeType || 'none';
-    const badge =
-      surchargeType !== 'none' ? `<span class="surcharge-badge">${t(SURCHARGE_LABEL_KEYS[surchargeType])}</span>` : '';
+    const surchargeTypes = entry.surchargeTypes || [];
+    const badges = surchargeTypes
+      .map((type) => `<span class="surcharge-badge">${t(SURCHARGE_LABEL_KEYS[type])}</span>`)
+      .join('');
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${entry.date}</td>
@@ -678,7 +699,7 @@
       <td>${entry.end}</td>
       <td class="num">${entry.breakMinutes} min</td>
       <td class="num">${formatHM(entry.workedMinutes)}</td>
-      <td class="num${moneyHidden ? ' masked' : ''}">${maskMoney(formatMoney(entry.earnedAmount))}${badge}</td>
+      <td class="num${moneyHidden ? ' masked' : ''}">${maskMoney(formatMoney(entry.earnedAmount))}${badges}</td>
       <td>
         <div class="row-actions">
           <button class="edit-btn" title="${t('editEntry')}" data-id="${entry.id}">✎</button>
@@ -702,7 +723,7 @@
       <td><input type="time" class="edit-end" value="${entry.end}"></td>
       <td class="num"><input type="number" class="edit-break" min="0" step="5" value="${entry.breakMinutes}"></td>
       <td class="num"></td>
-      <td><select class="edit-surcharge" title="${t('surchargeType')}">${surchargeOptionsHtml(entry.surchargeType || 'none')}</select></td>
+      <td>${surchargeChecksHtml(entry.surchargeTypes || [])}</td>
       <td>
         <div class="row-actions">
           <button class="save-edit-btn" title="${t('save')}">✓</button>
@@ -710,13 +731,15 @@
         </div>
       </td>
     `;
+    wireSurchargeExclusivity(tr);
     tr.querySelector('.save-edit-btn').addEventListener('click', async () => {
+      const surchargeTypes = Array.from(tr.querySelectorAll('.edit-surcharge:checked')).map((cb) => cb.value);
       const body = {
         date: tr.querySelector('.edit-date').value,
         start: tr.querySelector('.edit-start').value,
         end: tr.querySelector('.edit-end').value,
         breakMinutes: parseFloat(tr.querySelector('.edit-break').value) || 0,
-        surchargeType: tr.querySelector('.edit-surcharge').value,
+        surchargeTypes,
       };
       clearAlert(els.appAlert);
       try {
