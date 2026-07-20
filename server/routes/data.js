@@ -169,6 +169,7 @@ router.delete('/worklog/:id', (req, res) => {
 
 router.get('/export', async (req, res) => {
   const format = req.query.format;
+  const lang = req.query.lang === 'en' ? 'en' : 'de';
   const db = readDb();
   const entries = listEntries(db, req.userId, req.dek);
   const filenameBase = `arbeitszeit-${req.username}-${todayStr()}`;
@@ -176,18 +177,18 @@ router.get('/export', async (req, res) => {
   if (format === 'csv') {
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="${filenameBase}.csv"`);
-    res.send(buildCsv(entries));
+    res.send(buildCsv(entries, lang));
   } else if (format === 'xml') {
     res.setHeader('Content-Type', 'application/xml; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="${filenameBase}.xml"`);
-    res.send(buildXml(entries, req.username));
+    res.send(buildXml(entries, req.username, lang));
   } else if (format === 'xlsx') {
     res.setHeader(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     );
     res.setHeader('Content-Disposition', `attachment; filename="${filenameBase}.xlsx"`);
-    await buildXlsx(entries, req.username, res);
+    await buildXlsx(entries, req.username, lang, res);
   } else {
     res.status(400).json({ error: 'invalid_format' });
   }

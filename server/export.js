@@ -1,5 +1,52 @@
 const ExcelJS = require('exceljs');
 
+const LABELS = {
+  de: {
+    date: 'Datum',
+    start: 'Start',
+    end: 'Ende',
+    breakMin: 'Pause (Min)',
+    workedHours: 'Gearbeitet (Std)',
+    workedMin: 'Gearbeitet (Min)',
+    earnings: 'Verdienst (EUR)',
+    sum: 'Summe',
+    sheetName: 'Arbeitszeit',
+    xmlRoot: 'arbeitszeit-protokoll',
+    xmlUser: 'benutzer',
+    xmlEntry: 'eintrag',
+    xmlDate: 'datum',
+    xmlStart: 'start',
+    xmlEnd: 'ende',
+    xmlBreakMin: 'pause_minuten',
+    xmlWorkedMin: 'gearbeitete_minuten',
+    xmlEarnings: 'verdienst_eur',
+  },
+  en: {
+    date: 'Date',
+    start: 'Start',
+    end: 'End',
+    breakMin: 'Break (min)',
+    workedHours: 'Worked (h)',
+    workedMin: 'Worked (min)',
+    earnings: 'Earnings (EUR)',
+    sum: 'Total',
+    sheetName: 'Worktime',
+    xmlRoot: 'worklog',
+    xmlUser: 'user',
+    xmlEntry: 'entry',
+    xmlDate: 'date',
+    xmlStart: 'start',
+    xmlEnd: 'end',
+    xmlBreakMin: 'break_minutes',
+    xmlWorkedMin: 'worked_minutes',
+    xmlEarnings: 'earnings_eur',
+  },
+};
+
+function labelsFor(lang) {
+  return LABELS[lang] || LABELS.de;
+}
+
 function formatHours(minutes) {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
@@ -14,8 +61,9 @@ function csvEscape(value) {
   return str;
 }
 
-function buildCsv(entries) {
-  const header = ['Datum', 'Start', 'Ende', 'Pause (Min)', 'Gearbeitet (Std)', 'Gearbeitet (Min)', 'Verdienst (EUR)'];
+function buildCsv(entries, lang) {
+  const L = labelsFor(lang);
+  const header = [L.date, L.start, L.end, L.breakMin, L.workedHours, L.workedMin, L.earnings];
   const rows = entries.map((e) => [
     e.date,
     e.start,
@@ -40,38 +88,40 @@ function xmlEscape(value) {
   }[c]));
 }
 
-function buildXml(entries, username) {
+function buildXml(entries, username, lang) {
+  const L = labelsFor(lang);
   const items = entries
     .map(
-      (e) => `  <eintrag>
-    <datum>${xmlEscape(e.date)}</datum>
-    <start>${xmlEscape(e.start)}</start>
-    <ende>${xmlEscape(e.end)}</ende>
-    <pause_minuten>${e.breakMinutes}</pause_minuten>
-    <gearbeitete_minuten>${e.workedMinutes}</gearbeitete_minuten>
-    <verdienst_eur>${e.earnedAmount.toFixed(2)}</verdienst_eur>
-  </eintrag>`
+      (e) => `  <${L.xmlEntry}>
+    <${L.xmlDate}>${xmlEscape(e.date)}</${L.xmlDate}>
+    <${L.xmlStart}>${xmlEscape(e.start)}</${L.xmlStart}>
+    <${L.xmlEnd}>${xmlEscape(e.end)}</${L.xmlEnd}>
+    <${L.xmlBreakMin}>${e.breakMinutes}</${L.xmlBreakMin}>
+    <${L.xmlWorkedMin}>${e.workedMinutes}</${L.xmlWorkedMin}>
+    <${L.xmlEarnings}>${e.earnedAmount.toFixed(2)}</${L.xmlEarnings}>
+  </${L.xmlEntry}>`
     )
     .join('\n');
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<arbeitszeit-protokoll benutzer="${xmlEscape(username)}">\n${items}\n</arbeitszeit-protokoll>\n`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<${L.xmlRoot} ${L.xmlUser}="${xmlEscape(username)}">\n${items}\n</${L.xmlRoot}>\n`;
 }
 
-async function buildXlsx(entries, username, res) {
+async function buildXlsx(entries, username, lang, res) {
+  const L = labelsFor(lang);
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'Arbeitszeit-App';
   workbook.created = new Date();
 
-  const sheet = workbook.addWorksheet('Arbeitszeit', {
+  const sheet = workbook.addWorksheet(L.sheetName, {
     views: [{ state: 'frozen', ySplit: 1 }],
   });
 
   sheet.columns = [
-    { header: 'Datum', key: 'date', width: 14 },
-    { header: 'Start', key: 'start', width: 10 },
-    { header: 'Ende', key: 'end', width: 10 },
-    { header: 'Pause (Min)', key: 'breakMinutes', width: 13 },
-    { header: 'Gearbeitet (Std)', key: 'workedHours', width: 16 },
-    { header: 'Verdienst (EUR)', key: 'earnedAmount', width: 16 },
+    { header: L.date, key: 'date', width: 14 },
+    { header: L.start, key: 'start', width: 10 },
+    { header: L.end, key: 'end', width: 10 },
+    { header: L.breakMin, key: 'breakMinutes', width: 13 },
+    { header: L.workedHours, key: 'workedHours', width: 16 },
+    { header: L.earnings, key: 'earnedAmount', width: 16 },
   ];
 
   sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
@@ -101,7 +151,7 @@ async function buildXlsx(entries, username, res) {
   }
 
   const totalsRow = sheet.addRow({
-    date: 'Summe',
+    date: L.sum,
     start: '',
     end: '',
     breakMinutes: '',

@@ -95,6 +95,7 @@ router.post('/login', (req, res) => {
   if (lockedForSeconds) {
     return res.status(429).json({
       error: 'too_many_attempts',
+      retryAfterSeconds: lockedForSeconds,
       message: `Zu viele Fehlversuche. Bitte in ${lockedForSeconds}s erneut versuchen.`,
     });
   }

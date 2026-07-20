@@ -1,8 +1,11 @@
 # Arbeitszeit-App
 
+🇬🇧 [English version](README.en.md)
+
 Web-App zum Tracken der Arbeitszeit mit Mehrbenutzer-Login: Countdown bis
 Feierabend (inkl. Pause), Live-Verdienst-Counter, ein Protokoll aller
-vergangenen Arbeitstage und Export als CSV, XML oder Excel.
+vergangenen Arbeitstage und Export als CSV, XML oder Excel. Die Oberfläche
+gibt es auf Deutsch und Englisch, dazu drei Themes (Hell, Dunkel, Platine).
 
 ## Sicherheit / Datenschutz
 
@@ -78,3 +81,6 @@ Volume, nicht im Image).
   Einträge löschen und die komplette Historie als CSV, XML oder Excel
   (mit Formatierung und Summenzeile) exportieren.
 - Passwort ändern ist über den Link oben rechts möglich.
+- Sprache (DE/EN) und Theme (Hell/Dunkel/Platine) lassen sich oben über die
+  zwei Auswahlfelder umschalten; die Wahl wird pro Browser gespeichert und
+  gilt auch schon auf dem Login-Bildschirm.

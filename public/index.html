@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Arbeitszeit</title>
+<script>
+  // Applied before first paint to avoid a flash of the wrong theme.
+  (function () {
+    try {
+      var theme = localStorage.getItem('arbeitszeit.theme');
+      if (theme) document.documentElement.setAttribute('data-theme', theme);
+    } catch (e) {}
+  })();
+</script>
 <style>
   :root {
     color-scheme: light dark;
@@ -15,9 +24,14 @@
     --accent-2: #16a34a;
     --danger: #dc2626;
     --border: #e5e7eb;
+    --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --radius-lg: 14px;
+    --radius-md: 8px;
+    --bg-pattern: none;
   }
   @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme]) {
+      color-scheme: dark;
       --bg: #16181c;
       --card-bg: #212327;
       --text: #f1f2f4;
@@ -25,11 +39,56 @@
       --border: #33363b;
     }
   }
+  html[data-theme="light"] {
+    color-scheme: light;
+    --bg: #f4f5f7;
+    --card-bg: #ffffff;
+    --text: #1a1c1e;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --accent-2: #16a34a;
+    --border: #e5e7eb;
+    --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --radius-lg: 14px;
+    --radius-md: 8px;
+    --bg-pattern: none;
+  }
+  html[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #16181c;
+    --card-bg: #212327;
+    --text: #f1f2f4;
+    --muted: #9aa0a8;
+    --accent: #2563eb;
+    --accent-2: #16a34a;
+    --border: #33363b;
+    --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --radius-lg: 14px;
+    --radius-md: 8px;
+    --bg-pattern: none;
+  }
+  html[data-theme="pcb"] {
+    color-scheme: dark;
+    --bg: #071a12;
+    --card-bg: #0c2419;
+    --text: #d7f5e3;
+    --muted: #5f9c82;
+    --accent: #e3b341;
+    --accent-2: #35d488;
+    --danger: #ff6b5e;
+    --border: #1f4a34;
+    --font-main: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --radius-lg: 4px;
+    --radius-md: 3px;
+    --bg-pattern: radial-gradient(circle, #1f4a34 1px, transparent 1px);
+  }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: var(--font-main);
     background: var(--bg);
+    background-image: var(--bg-pattern);
+    background-size: 22px 22px;
     color: var(--text);
     display: flex;
     justify-content: center;
@@ -44,6 +103,21 @@
     margin: 0 0 20px;
     text-align: center;
   }
+  .prefs-bar {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .prefs-bar select {
+    background: var(--card-bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    font-family: var(--font-main);
+  }
   .topbar {
     display: flex;
     justify-content: space-between;
@@ -56,7 +130,7 @@
   .card {
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: var(--radius-lg);
     padding: 20px;
     margin-bottom: 16px;
   }
@@ -81,15 +155,16 @@
     width: 100%;
     margin-top: 4px;
     padding: 10px 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     border: 1px solid var(--border);
     background: var(--bg);
     color: var(--text);
     font-size: 1rem;
+    font-family: var(--font-main);
   }
   fieldset {
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 12px;
     margin: 0 0 12px;
   }
@@ -115,11 +190,12 @@
   button {
     padding: 12px;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background: var(--accent);
     color: white;
     font-size: 1rem;
     font-weight: 600;
+    font-family: var(--font-main);
     cursor: pointer;
   }
   button.block { width: 100%; }
@@ -180,7 +256,7 @@
     background: #fee2e2;
     color: #991b1b;
     padding: 10px 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     font-size: 0.85rem;
     margin-bottom: 12px;
   }
@@ -221,33 +297,45 @@
   <div class="app">
     <h1>⏱️ Arbeitszeit</h1>
 
+    <div class="prefs-bar">
+      <select id="langSelect" aria-label="Language">
+        <option value="de">DE</option>
+        <option value="en">EN</option>
+      </select>
+      <select id="themeSelect" aria-label="Theme">
+        <option value="light" data-i18n="themeLight">Hell</option>
+        <option value="dark" data-i18n="themeDark">Dunkel</option>
+        <option value="pcb" data-i18n="themePcb">Platine</option>
+      </select>
+    </div>
+
     <!-- AUTH VIEW -->
     <section id="authView">
       <div class="card">
         <div class="tabs">
-          <button type="button" id="tabLogin" class="active">Anmelden</button>
-          <button type="button" id="tabRegister">Registrieren</button>
+          <button type="button" id="tabLogin" class="active" data-i18n="tabLogin">Anmelden</button>
+          <button type="button" id="tabRegister" data-i18n="tabRegister">Registrieren</button>
         </div>
         <div id="authAlert"></div>
 
         <form id="loginForm">
-          <label>Benutzername
+          <label data-i18n="username">Benutzername
             <input type="text" id="loginUsername" autocomplete="username" required>
           </label>
-          <label>Passwort
+          <label data-i18n="password">Passwort
             <input type="password" id="loginPassword" autocomplete="current-password" required>
           </label>
-          <button type="submit" class="block">Anmelden</button>
+          <button type="submit" class="block" data-i18n="loginSubmit">Anmelden</button>
         </form>
 
         <form id="registerForm" hidden>
-          <label>Benutzername
+          <label data-i18n="username">Benutzername
             <input type="text" id="registerUsername" autocomplete="username" required>
           </label>
-          <label>Passwort (mind. 8 Zeichen)
+          <label data-i18n="passwordMin">Passwort (mind. 8 Zeichen)
             <input type="password" id="registerPassword" autocomplete="new-password" required>
           </label>
-          <button type="submit" class="block">Konto erstellen</button>
+          <button type="submit" class="block" data-i18n="registerSubmit">Konto erstellen</button>
         </form>
       </div>
     </section>
@@ -255,10 +343,10 @@
     <!-- APP VIEW -->
     <section id="appView" hidden>
       <div class="topbar">
-        <span>Angemeldet als <strong id="currentUsername"></strong></span>
+        <span><span data-i18n="loggedInAs">Angemeldet als</span> <strong id="currentUsername"></strong></span>
         <div class="actions">
-          <button type="button" class="link" id="changePasswordBtn">Passwort ändern</button>
-          <button type="button" class="link" id="logoutBtn">Abmelden</button>
+          <button type="button" class="link" id="changePasswordBtn" data-i18n="changePassword">Passwort ändern</button>
+          <button type="button" class="link" id="logoutBtn" data-i18n="logout">Abmelden</button>
         </div>
       </div>
 
@@ -266,106 +354,107 @@
 
       <!-- Passwort ändern -->
       <section class="card" id="changePasswordCard" hidden>
-        <h2>Passwort ändern</h2>
+        <h2 data-i18n="changePassword">Passwort ändern</h2>
         <form id="changePasswordForm">
-          <label>Aktuelles Passwort
+          <label data-i18n="currentPassword">Aktuelles Passwort
             <input type="password" id="currentPassword" autocomplete="current-password" required>
           </label>
-          <label>Neues Passwort (mind. 8 Zeichen)
+          <label data-i18n="newPasswordMin">Neues Passwort (mind. 8 Zeichen)
             <input type="password" id="newPassword" autocomplete="new-password" required>
           </label>
           <div class="btn-row">
-            <button type="submit">Speichern</button>
-            <button type="button" class="secondary" id="cancelChangePassword">Abbrechen</button>
+            <button type="submit" data-i18n="save">Speichern</button>
+            <button type="button" class="secondary" id="cancelChangePassword" data-i18n="cancel">Abbrechen</button>
           </div>
         </form>
       </section>
 
       <!-- Einstellungen -->
       <section class="card" id="setupCard">
-        <h2>Einstellungen</h2>
-        <label>Arbeitsbeginn
+        <h2 data-i18n="settings">Einstellungen</h2>
+        <label data-i18n="workStart">Arbeitsbeginn
           <input type="time" id="startTime">
         </label>
-        <label>Arbeitsdauer (Stunden, ohne Pause)
+        <label data-i18n="workDuration">Arbeitsdauer (Stunden, ohne Pause)
           <input type="number" id="duration" step="0.25" min="0" value="8">
         </label>
         <fieldset>
-          <legend>Pause</legend>
-          <label>Pause ab
+          <legend data-i18n="break">Pause</legend>
+          <label data-i18n="breakFrom">Pause ab
             <input type="time" id="breakStart" value="12:00">
           </label>
-          <label>Pausendauer (Minuten)
+          <label data-i18n="breakDuration">Pausendauer (Minuten)
             <input type="number" id="breakMinutes" min="0" step="5" value="30">
           </label>
         </fieldset>
         <fieldset>
-          <legend>Gehalt</legend>
+          <legend data-i18n="salary">Gehalt</legend>
           <div class="radio-row">
-            <label><input type="radio" name="salaryType" value="monthly" checked> Monatsgehalt</label>
-            <label><input type="radio" name="salaryType" value="yearly"> Jahresgehalt</label>
+            <label><input type="radio" name="salaryType" value="monthly" checked> <span data-i18n="monthlySalary">Monatsgehalt</span></label>
+            <label><input type="radio" name="salaryType" value="yearly"> <span data-i18n="yearlySalary">Jahresgehalt</span></label>
           </div>
-          <label>Betrag (€ brutto)
-            <input type="number" id="salaryAmount" min="0" step="10" placeholder="z.B. 3500">
+          <label data-i18n="salaryAmount">Betrag (€ brutto)
+            <input type="number" id="salaryAmount" min="0" step="10" data-i18n-placeholder="salaryAmountPlaceholder" placeholder="z.B. 3500">
           </label>
-          <label>Vertragliche Wochenstunden
+          <label data-i18n="weeklyHours">Vertragliche Wochenstunden
             <input type="number" id="weeklyHours" min="1" step="0.5" value="40">
           </label>
         </fieldset>
-        <button id="saveSettingsBtn" class="block">Einstellungen speichern</button>
-        <button id="startBtn" class="block secondary" style="margin-top:8px;">Arbeitstag starten</button>
+        <button id="saveSettingsBtn" class="block" data-i18n="saveSettings">Einstellungen speichern</button>
+        <button id="startBtn" class="block secondary" style="margin-top:8px;" data-i18n="startWorkday">Arbeitstag starten</button>
       </section>
 
       <!-- Status -->
       <section class="card" id="statusCard" hidden>
-        <h2>Bis Feierabend</h2>
+        <h2 data-i18n="untilQuittingTime">Bis Feierabend</h2>
         <div class="big-timer" id="countdown">--:--:--</div>
-        <div class="sub">Feierabend um <span id="feierabendTime"></span> Uhr (inkl. Pause)</div>
+        <div class="sub"><span data-i18n="quittingTimeAt">Feierabend um</span> <span id="feierabendTime"></span> <span data-i18n="quittingTimeSuffix">Uhr (inkl. Pause)</span></div>
         <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
         <div class="btn-row">
-          <button id="finishBtn">Tag abschließen</button>
-          <button id="cancelBtn" class="secondary">Verwerfen</button>
+          <button id="finishBtn" data-i18n="finishWorkday">Tag abschließen</button>
+          <button id="cancelBtn" class="secondary" data-i18n="discard">Verwerfen</button>
         </div>
       </section>
 
       <!-- Verdienst -->
       <section class="card" id="earningsCard" hidden>
-        <h2>Verdienst heute</h2>
+        <h2 data-i18n="earningsToday">Verdienst heute</h2>
         <div class="big-money" id="earnedAmount">0,00 €</div>
         <div class="sub" id="breakNote"></div>
-        <div class="sub">Stundenlohn: <span id="hourlyRate">–</span> €/h</div>
+        <div class="sub"><span data-i18n="hourlyRate">Stundenlohn:</span> <span id="hourlyRate">–</span> €/h</div>
       </section>
 
       <!-- Protokoll / Verlauf -->
       <section class="card">
-        <h2>Protokoll</h2>
+        <h2 data-i18n="log">Protokoll</h2>
         <div class="table-wrap">
           <table id="historyTable">
             <thead>
               <tr>
-                <th>Datum</th>
-                <th>Start</th>
-                <th>Ende</th>
-                <th class="num">Pause</th>
-                <th class="num">Gearbeitet</th>
-                <th class="num">Verdienst</th>
+                <th data-i18n="date">Datum</th>
+                <th data-i18n="start">Start</th>
+                <th data-i18n="end">Ende</th>
+                <th class="num" data-i18n="break">Pause</th>
+                <th class="num" data-i18n="worked">Gearbeitet</th>
+                <th class="num" data-i18n="earnings">Verdienst</th>
                 <th></th>
               </tr>
             </thead>
             <tbody id="historyBody"></tbody>
           </table>
         </div>
-        <div class="empty" id="historyEmpty" hidden>Noch keine Einträge.</div>
+        <div class="empty" id="historyEmpty" hidden data-i18n="noEntries">Noch keine Einträge.</div>
 
         <div class="export-row">
-          <button class="secondary" id="exportCsv">CSV exportieren</button>
-          <button class="secondary" id="exportXml">XML exportieren</button>
-          <button class="secondary" id="exportXlsx">Excel exportieren</button>
+          <button class="secondary" id="exportCsv" data-i18n="exportCsv">CSV exportieren</button>
+          <button class="secondary" id="exportXml" data-i18n="exportXml">XML exportieren</button>
+          <button class="secondary" id="exportXlsx" data-i18n="exportXlsx">Excel exportieren</button>
         </div>
       </section>
     </section>
   </div>
 
+<script src="i18n.js" defer></script>
 <script src="app.js" defer></script>
 </body>
 </html>

@@ -1,7 +1,11 @@
 (() => {
   const el = (id) => document.getElementById(id);
+  const t = window.i18n.t;
 
   const els = {
+    langSelect: el('langSelect'),
+    themeSelect: el('themeSelect'),
+
     authView: el('authView'),
     appView: el('appView'),
     authAlert: el('authAlert'),
@@ -70,7 +74,7 @@
       data = null;
     }
     if (!res.ok) {
-      const err = new Error((data && data.message) || 'Ein Fehler ist aufgetreten.');
+      const err = new Error((data && data.message) || t('err_generic'));
       err.status = res.status;
       err.data = data;
       throw err;
@@ -80,6 +84,10 @@
 
   function showAlert(container, message, type = 'error') {
     container.innerHTML = `<div class="alert${type === 'success' ? ' success' : ''}">${message}</div>`;
+  }
+
+  function showError(container, err) {
+    showAlert(container, window.i18n.localizeError(err.data, err.message));
   }
 
   function clearAlert(container) {
@@ -93,6 +101,44 @@
   function setSalaryType(type) {
     document.querySelector(`input[name="salaryType"][value="${type}"]`).checked = true;
   }
+
+  // --- Theme ---
+
+  const THEME_KEY = 'arbeitszeit.theme';
+
+  function getStoredTheme() {
+    try {
+      return localStorage.getItem(THEME_KEY);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function effectiveTheme() {
+    return getStoredTheme() || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  }
+
+  function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  els.themeSelect.value = effectiveTheme();
+  els.themeSelect.addEventListener('change', () => setTheme(els.themeSelect.value));
+
+  // --- Language ---
+
+  els.langSelect.value = window.i18n.getLang();
+  els.langSelect.addEventListener('change', () => window.i18n.setLang(els.langSelect.value));
+
+  document.addEventListener('i18n:change', () => {
+    tick();
+    if (!els.appView.hidden) loadHistory();
+  });
 
   // --- Auth view ---
 
@@ -122,7 +168,7 @@
       });
       await enterApp(data.username);
     } catch (err) {
-      showAlert(els.authAlert, err.message);
+      showError(els.authAlert, err);
     }
   });
 
@@ -136,7 +182,7 @@
       });
       await enterApp(data.username);
     } catch (err) {
-      showAlert(els.authAlert, err.message);
+      showError(els.authAlert, err);
     }
   });
 
@@ -172,9 +218,9 @@
       });
       els.changePasswordCard.hidden = true;
       els.changePasswordForm.reset();
-      showAlert(els.appAlert, 'Passwort geändert.', 'success');
+      showAlert(els.appAlert, t('passwordChanged'), 'success');
     } catch (err) {
-      showAlert(els.appAlert, err.message);
+      showError(els.appAlert, err);
     }
   });
 
@@ -208,9 +254,9 @@
     clearAlert(els.appAlert);
     try {
       await api('/settings', { method: 'PUT', body: readSettingsForm() });
-      showAlert(els.appAlert, 'Einstellungen gespeichert.', 'success');
+      showAlert(els.appAlert, t('settingsSaved'), 'success');
     } catch (err) {
-      showAlert(els.appAlert, err.message);
+      showError(els.appAlert, err);
     }
   });
 
@@ -221,7 +267,7 @@
       settings = await api('/workday/start', { method: 'POST', body: { startTime: els.startTime.value } });
       renderWorkdayState();
     } catch (err) {
-      showAlert(els.appAlert, err.message);
+      showError(els.appAlert, err);
     }
   });
 
@@ -240,7 +286,7 @@
     await loadHistory();
     showAlert(
       els.appAlert,
-      `Tag gespeichert: ${formatHM(entry.workedMinutes)} gearbeitet, ${formatMoney(entry.earnedAmount)} verdient.`,
+      t('dayCompleted', { duration: formatHM(entry.workedMinutes), amount: formatMoney(entry.earnedAmount) }),
       'success'
     );
   });
@@ -275,7 +321,7 @@
   }
 
   function formatMoney(value) {
-    return value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+    return value.toLocaleString(window.i18n.locale(), { style: 'currency', currency: 'EUR' });
   }
 
   function formatHM(minutes) {
@@ -305,9 +351,9 @@
     const feierabend = new Date(startD.getTime() + durationMs + breakMs);
     const remaining = feierabend - now;
 
-    els.countdown.textContent = remaining > 0 ? formatDuration(remaining) : 'Feierabend! 🎉';
+    els.countdown.textContent = remaining > 0 ? formatDuration(remaining) : t('quittingTimeDone');
     els.countdown.classList.toggle('done', remaining <= 0);
-    els.feierabendTime.textContent = feierabend.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    els.feierabendTime.textContent = feierabend.toLocaleTimeString(window.i18n.locale(), { hour: '2-digit', minute: '2-digit' });
 
     const totalWindowMs = durationMs + breakMs;
     const rawElapsedMs = Math.min(Math.max(now - startD, 0), totalWindowMs);
@@ -325,7 +371,7 @@
     workedMs = Math.max(workedMs, 0);
 
     const inBreak = now > breakStart && now < breakEnd;
-    els.breakNote.textContent = inBreak ? 'Pause läuft – kein Verdienst' : '';
+    els.breakNote.textContent = inBreak ? t('breakRunning') : '';
 
     const rate = hourlyRateFor(settings);
     const earned = rate * (workedMs / 3600000);
@@ -359,13 +405,13 @@
         <td class="num">${entry.breakMinutes} min</td>
         <td class="num">${formatHM(entry.workedMinutes)}</td>
         <td class="num">${formatMoney(entry.earnedAmount)}</td>
-        <td><button class="del-btn" title="Löschen" data-id="${entry.id}">✕</button></td>
+        <td><button class="del-btn" title="${t('deleteEntry')}" data-id="${entry.id}">✕</button></td>
       `;
       els.historyBody.appendChild(tr);
     }
     els.historyBody.querySelectorAll('.del-btn').forEach((btn) => {
       btn.addEventListener('click', async () => {
-        if (!confirm('Diesen Eintrag wirklich löschen?')) return;
+        if (!confirm(t('confirmDeleteEntry'))) return;
         await api(`/worklog/${btn.dataset.id}`, { method: 'DELETE' });
         loadHistory();
       });
@@ -373,13 +419,13 @@
   }
 
   els.exportCsv.addEventListener('click', () => {
-    window.location.href = '/api/export?format=csv';
+    window.location.href = `/api/export?format=csv&lang=${window.i18n.getLang()}`;
   });
   els.exportXml.addEventListener('click', () => {
-    window.location.href = '/api/export?format=xml';
+    window.location.href = `/api/export?format=xml&lang=${window.i18n.getLang()}`;
   });
   els.exportXlsx.addEventListener('click', () => {
-    window.location.href = '/api/export?format=xlsx';
+    window.location.href = `/api/export?format=xlsx&lang=${window.i18n.getLang()}`;
   });
 
   // --- Bootstrap ---
@@ -395,6 +441,7 @@
   }
 
   async function init() {
+    window.i18n.applyStaticTranslations();
     try {
       const me = await api('/me');
       await enterApp(me.username);
