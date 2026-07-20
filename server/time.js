@@ -10,7 +10,9 @@ function combine(dateStr, hhmm) {
 function computeWorkedMinutes(dateStr, startHHMM, endHHMM, breakStartHHMM, breakMinutes) {
   const start = combine(dateStr, startHHMM);
   let end = combine(dateStr, endHHMM);
-  if (end <= start) end = new Date(end.getTime() + 24 * 3600000); // overnight shift
+  // Strictly before, not <=: an identical start/end (e.g. an accidental
+  // double-tap of an NFC toggle) means zero elapsed time, not a full day.
+  if (end < start) end = new Date(end.getTime() + 24 * 3600000); // overnight shift
 
   let breakStart = combine(dateStr, breakStartHHMM);
   if (breakStart < start) breakStart = new Date(start.getTime());

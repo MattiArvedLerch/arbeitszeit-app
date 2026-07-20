@@ -5,6 +5,7 @@ const session = require('express-session');
 
 const authRoutes = require('./routes/auth');
 const dataRoutes = require('./routes/data');
+const apiTokenRoutes = require('./routes/api-token');
 
 const PORT = process.env.PORT || 3000;
 let sessionSecret = process.env.SESSION_SECRET;
@@ -37,6 +38,10 @@ app.use(
 );
 
 app.use('/api', authRoutes);
+// Must come before dataRoutes: dataRoutes applies a blanket session-auth
+// middleware to every path under /api, which would otherwise intercept
+// /api/toggle and /api/token/* before this router ever sees them.
+app.use('/api', apiTokenRoutes);
 app.use('/api', dataRoutes);
 
 app.use(express.static(path.join(__dirname, '..', 'public')));

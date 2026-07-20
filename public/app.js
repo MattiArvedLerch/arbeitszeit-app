@@ -28,6 +28,16 @@
     currentPassword: el('currentPassword'),
     newPassword: el('newPassword'),
 
+    apiTokenBtn: el('apiTokenBtn'),
+    apiTokenCard: el('apiTokenCard'),
+    apiTokenStatus: el('apiTokenStatus'),
+    apiTokenResult: el('apiTokenResult'),
+    apiTokenValue: el('apiTokenValue'),
+    apiTokenUsage: el('apiTokenUsage'),
+    apiTokenGenerateBtn: el('apiTokenGenerateBtn'),
+    apiTokenRevokeBtn: el('apiTokenRevokeBtn'),
+    closeApiTokenCard: el('closeApiTokenCard'),
+
     setupCard: el('setupCard'),
     startTime: el('startTime'),
     duration: el('duration'),
@@ -319,6 +329,72 @@
       els.changePasswordCard.hidden = true;
       els.changePasswordForm.reset();
       showAlert(els.appAlert, t('passwordChanged'), 'success');
+    } catch (err) {
+      showError(els.appAlert, err);
+    }
+  });
+
+  // --- API token for Shortcuts / NFC ---
+
+  async function refreshApiTokenStatus() {
+    const status = await api('/token/status');
+    if (status.active) {
+      els.apiTokenStatus.textContent = t('apiTokenActiveSince', {
+        date: new Date(status.createdAt).toLocaleDateString(window.i18n.locale()),
+      });
+      els.apiTokenRevokeBtn.hidden = false;
+      els.apiTokenGenerateBtn.textContent = t('apiTokenRegenerate');
+    } else {
+      els.apiTokenStatus.textContent = t('apiTokenNone');
+      els.apiTokenRevokeBtn.hidden = true;
+      els.apiTokenGenerateBtn.textContent = t('apiTokenGenerate');
+    }
+  }
+
+  els.apiTokenBtn.addEventListener('click', async () => {
+    els.apiTokenCard.hidden = false;
+    els.apiTokenResult.hidden = true;
+    els.apiTokenCard.scrollIntoView({ behavior: 'smooth' });
+    try {
+      await refreshApiTokenStatus();
+    } catch (err) {
+      showError(els.appAlert, err);
+    }
+  });
+
+  els.closeApiTokenCard.addEventListener('click', () => {
+    els.apiTokenCard.hidden = true;
+  });
+
+  els.apiTokenGenerateBtn.addEventListener('click', async () => {
+    clearAlert(els.appAlert);
+    try {
+      const data = await api('/token/generate', { method: 'POST' });
+      els.apiTokenValue.value = data.token;
+      els.apiTokenUsage.textContent = [
+        t('apiTokenUsageIntro'),
+        'Method: POST',
+        `URL: ${window.location.origin}/api/toggle`,
+        `Header: Authorization: Bearer ${data.token}`,
+      ].join('\n');
+      els.apiTokenResult.hidden = false;
+      await refreshApiTokenStatus();
+      showAlert(els.appAlert, t('apiTokenGenerated'), 'success');
+    } catch (err) {
+      showError(els.appAlert, err);
+    }
+  });
+
+  els.apiTokenValue.addEventListener('click', () => els.apiTokenValue.select());
+
+  els.apiTokenRevokeBtn.addEventListener('click', async () => {
+    if (!confirm(t('apiTokenRevokeConfirm'))) return;
+    clearAlert(els.appAlert);
+    try {
+      await api('/token/revoke', { method: 'POST' });
+      els.apiTokenResult.hidden = true;
+      await refreshApiTokenStatus();
+      showAlert(els.appAlert, t('apiTokenRevoked'), 'success');
     } catch (err) {
       showError(els.appAlert, err);
     }

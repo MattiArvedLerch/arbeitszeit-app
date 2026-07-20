@@ -95,6 +95,13 @@ enthält.
 - Sprache (DE/EN) und Theme (Hell/Dunkel/Platine) lassen sich oben über die
   zwei Auswahlfelder umschalten; die Wahl wird pro Browser gespeichert und
   gilt auch schon auf dem Login-Bildschirm.
+- "API-Token" (oben rechts) erzeugt einen persönlichen Token, um Start/
+  Ende per iOS-Kurzbefehl auszulösen (z.B. per NFC-Tag): `POST
+  /api/toggle` mit Header `Authorization: Bearer <Token>` startet einen
+  Arbeitstag, falls keiner läuft, oder beendet den laufenden. Der Token
+  wird nur einmal angezeigt und kann jederzeit widerrufen/neu generiert
+  werden — wie ein zweites Passwort behandeln, da er ohne Login-Session
+  auf deine Daten schreiben kann.
 
 ## Lizenz
 

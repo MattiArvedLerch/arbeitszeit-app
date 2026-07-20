@@ -83,6 +83,21 @@ window.i18n = (function () {
       dayCompleted: 'Tag gespeichert: {duration} gearbeitet, {amount} verdient.',
       entryUpdated: 'Eintrag aktualisiert.',
 
+      apiTokenManage: 'API-Token',
+      apiTokenTitle: 'API-Token für Kurzbefehle',
+      apiTokenDescription:
+        'Mit einem API-Token kannst du deinen Arbeitstag per iOS-Kurzbefehl (z.B. beim Scannen eines NFC-Tags) starten und beenden, ohne dich anzumelden.',
+      apiTokenNone: 'Kein Token aktiv.',
+      apiTokenActiveSince: 'Token aktiv seit {date}.',
+      apiTokenGenerate: 'Token generieren',
+      apiTokenRegenerate: 'Neuen Token generieren',
+      apiTokenRevoke: 'Widerrufen',
+      apiTokenRevokeConfirm: 'Token wirklich widerrufen? Bestehende Kurzbefehle funktionieren danach nicht mehr.',
+      apiTokenShownOnce: 'Token (wird nur jetzt angezeigt – jetzt kopieren)',
+      apiTokenUsageIntro: 'Im iOS-Kurzbefehl "Inhalte von URL abrufen" verwenden:',
+      apiTokenGenerated: 'Neuer Token erstellt.',
+      apiTokenRevoked: 'Token widerrufen.',
+
       err_invalid_username: 'Benutzername muss 3-32 Zeichen lang sein (Buchstaben, Zahlen, _ oder -).',
       err_invalid_password: 'Passwort muss mindestens 8 Zeichen lang sein.',
       err_username_taken: 'Benutzername bereits vergeben.',
@@ -181,6 +196,21 @@ window.i18n = (function () {
       passwordChanged: 'Password changed.',
       dayCompleted: 'Day saved: {duration} worked, {amount} earned.',
       entryUpdated: 'Entry updated.',
+
+      apiTokenManage: 'API token',
+      apiTokenTitle: 'API token for Shortcuts',
+      apiTokenDescription:
+        'With an API token you can start and finish your workday via an iOS Shortcut (e.g. by scanning an NFC tag), without signing in.',
+      apiTokenNone: 'No token active.',
+      apiTokenActiveSince: 'Token active since {date}.',
+      apiTokenGenerate: 'Generate token',
+      apiTokenRegenerate: 'Generate new token',
+      apiTokenRevoke: 'Revoke',
+      apiTokenRevokeConfirm: 'Really revoke the token? Existing Shortcuts will stop working.',
+      apiTokenShownOnce: 'Token (shown only now – copy it now)',
+      apiTokenUsageIntro: 'Use in the iOS Shortcut action "Get Contents of URL":',
+      apiTokenGenerated: 'New token created.',
+      apiTokenRevoked: 'Token revoked.',
 
       err_invalid_username: 'Username must be 3-32 characters (letters, numbers, _ or -).',
       err_invalid_password: 'Password must be at least 8 characters long.',

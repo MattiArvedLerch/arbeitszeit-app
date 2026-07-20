@@ -4,29 +4,10 @@ const cryptoUtil = require('../crypto');
 const { requireAuth } = require('../session-keys');
 const { computeWorkedMinutes, todayStr, nowHHMM } = require('../time');
 const { buildCsv, buildXml, buildXlsx } = require('../export');
+const { getDecryptedSettings, saveSettings, hourlyRateFor, startWorkday, finishWorkday } = require('../workday');
 
 const router = express.Router();
 router.use(requireAuth);
-
-const DEFAULT_SETTINGS = {
-  duration: 8,
-  breakStart: '12:00',
-  breakMinutes: 30,
-  salaryType: 'monthly',
-  salaryAmount: 0,
-  weeklyHours: 40,
-  active: null, // { date, start } while a work day is running
-};
-
-function getDecryptedSettings(db, userId, dek) {
-  const rec = db.data[userId] && db.data[userId].settings;
-  if (!rec) return { ...DEFAULT_SETTINGS };
-  return { ...DEFAULT_SETTINGS, ...cryptoUtil.decryptJson(rec, dek) };
-}
-
-function saveSettings(mutableDb, userId, dek, settings) {
-  mutableDb.data[userId].settings = cryptoUtil.encryptJson(settings, dek);
-}
 
 router.get('/settings', (req, res) => {
   const db = readDb();
@@ -76,12 +57,7 @@ router.put('/settings', (req, res) => {
 router.post('/workday/start', (req, res) => {
   const startTime = typeof req.body.startTime === 'string' ? req.body.startTime : nowHHMM();
 
-  mutate((mutableDb) => {
-    const settings = getDecryptedSettings(mutableDb, req.userId, req.dek);
-    settings.active = { date: todayStr(), start: startTime };
-    saveSettings(mutableDb, req.userId, req.dek, settings);
-    return settings;
-  }).then((settings) => {
+  mutate((mutableDb) => startWorkday(mutableDb, req.userId, req.dek, startTime)).then((settings) => {
     res.json(settings);
   });
 });
@@ -97,12 +73,6 @@ router.post('/workday/cancel', (req, res) => {
   });
 });
 
-function hourlyRateFor(settings) {
-  return settings.salaryType === 'yearly'
-    ? settings.salaryAmount / (settings.weeklyHours * 52)
-    : settings.salaryAmount / (settings.weeklyHours * 4.33);
-}
-
 router.post('/workday/finish', (req, res) => {
   const db = readDb();
   const settings = getDecryptedSettings(db, req.userId, req.dek);
@@ -111,35 +81,8 @@ router.post('/workday/finish', (req, res) => {
   }
 
   const endTime = typeof req.body.endTime === 'string' ? req.body.endTime : nowHHMM();
-  const { date, start } = settings.active;
-  const workedMinutes = computeWorkedMinutes(date, start, endTime, settings.breakStart, settings.breakMinutes);
-  const earnedAmount = Math.round(hourlyRateFor(settings) * (workedMinutes / 60) * 100) / 100;
 
-  const entry = {
-    date,
-    start,
-    end: endTime,
-    breakMinutes: settings.breakMinutes,
-    workedMinutes,
-    plannedMinutes: Math.round(settings.duration * 60),
-    earnedAmount,
-  };
-
-  mutate((mutableDb) => {
-    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-    const record = {
-      id,
-      createdAt: new Date().toISOString(),
-      ...cryptoUtil.encryptJson(entry, req.dek),
-    };
-    mutableDb.data[req.userId].logs.push(record);
-
-    const s = getDecryptedSettings(mutableDb, req.userId, req.dek);
-    s.active = null;
-    saveSettings(mutableDb, req.userId, req.dek, s);
-
-    return { id, ...entry };
-  }).then((savedEntry) => {
+  mutate((mutableDb) => finishWorkday(mutableDb, req.userId, req.dek, endTime)).then((savedEntry) => {
     res.json(savedEntry);
   });
 });

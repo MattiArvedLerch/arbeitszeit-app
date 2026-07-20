@@ -444,6 +444,7 @@
       <div class="topbar">
         <span><span data-i18n="loggedInAs">Angemeldet als</span> <strong id="currentUsername"></strong></span>
         <div class="actions">
+          <button type="button" class="link" id="apiTokenBtn" data-i18n="apiTokenManage">API-Token</button>
           <button type="button" class="link" id="changePasswordBtn" data-i18n="changePassword">Passwort ändern</button>
           <button type="button" class="link" id="logoutBtn" data-i18n="logout">Abmelden</button>
         </div>
@@ -466,6 +467,24 @@
             <button type="button" class="secondary" id="cancelChangePassword" data-i18n="cancel">Abbrechen</button>
           </div>
         </form>
+      </section>
+
+      <!-- API-Token für Kurzbefehle/NFC -->
+      <section class="card" id="apiTokenCard" hidden>
+        <h2 data-i18n="apiTokenTitle">API-Token für Kurzbefehle</h2>
+        <p class="sub" id="apiTokenDescription" style="text-align:left;margin:0 0 14px;" data-i18n="apiTokenDescription"></p>
+        <p class="sub" id="apiTokenStatus" style="text-align:left;margin:0 0 14px;"></p>
+        <div id="apiTokenResult" hidden>
+          <label data-i18n="apiTokenShownOnce">Token (nur jetzt sichtbar)
+            <input type="text" id="apiTokenValue" readonly>
+          </label>
+          <p class="sub" id="apiTokenUsage" style="text-align:left;white-space:pre-line;margin:0 0 14px;"></p>
+        </div>
+        <div class="btn-row">
+          <button type="button" id="apiTokenGenerateBtn" data-i18n="apiTokenGenerate">Token generieren</button>
+          <button type="button" class="secondary" id="apiTokenRevokeBtn" hidden data-i18n="apiTokenRevoke">Widerrufen</button>
+        </div>
+        <button type="button" class="secondary block" id="closeApiTokenCard" style="margin-top:8px;" data-i18n="cancel">Abbrechen</button>
       </section>
 
       <!-- Einstellungen -->

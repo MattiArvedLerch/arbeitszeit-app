@@ -92,6 +92,13 @@ a script tends to encode host-specific paths.
 - Language (DE/EN) and theme (Light/Dark/PCB) can be switched using the
   two dropdowns at the top; the choice is saved per browser and already
   applies on the login screen.
+- "API token" (top right) generates a personal token for triggering
+  start/finish from an iOS Shortcut (e.g. via an NFC tag): `POST
+  /api/toggle` with header `Authorization: Bearer <token>` starts a
+  workday if none is running, or finishes the running one. The token is
+  shown once and can be revoked/regenerated at any time; treat it like a
+  second password, since it can write to your data without a login
+  session.
 
 ## License
 
