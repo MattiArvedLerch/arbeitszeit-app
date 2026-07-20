@@ -1,5 +1,18 @@
-FROM nginx:alpine
+FROM node:20-alpine
 
-COPY index.html /usr/share/nginx/html/index.html
+WORKDIR /app
 
-EXPOSE 80
+COPY package.json ./
+RUN npm install --omit=dev
+
+COPY server ./server
+COPY public ./public
+
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV DATA_DIR=/app/data
+
+EXPOSE 3000
+VOLUME ["/app/data"]
+
+CMD ["node", "server/index.js"]

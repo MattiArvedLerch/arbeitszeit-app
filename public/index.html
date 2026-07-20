@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arbeitszeit</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f4f5f7;
+    --card-bg: #ffffff;
+    --text: #1a1c1e;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --accent-2: #16a34a;
+    --danger: #dc2626;
+    --border: #e5e7eb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181c;
+      --card-bg: #212327;
+      --text: #f1f2f4;
+      --muted: #9aa0a8;
+      --border: #33363b;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    padding: 24px 16px 64px;
+  }
+  .app {
+    width: 100%;
+    max-width: 560px;
+  }
+  h1 {
+    font-size: 1.5rem;
+    margin: 0 0 20px;
+    text-align: center;
+  }
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  .topbar .actions { display: flex; gap: 8px; }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    margin: 0 0 14px;
+    font-size: 1rem;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  input[type="time"],
+  input[type="number"],
+  input[type="text"],
+  input[type="password"] {
+    width: 100%;
+    margin-top: 4px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1rem;
+  }
+  fieldset {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin: 0 0 12px;
+  }
+  legend {
+    font-size: 0.85rem;
+    color: var(--muted);
+    padding: 0 4px;
+  }
+  .radio-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+  }
+  .radio-row label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    color: var(--text);
+  }
+  .radio-row input { width: auto; margin: 0; }
+  button {
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.block { width: 100%; }
+  button:hover { opacity: 0.9; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.secondary {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    font-weight: 500;
+  }
+  button.danger { background: var(--danger); }
+  button.link {
+    background: none;
+    color: var(--accent);
+    font-weight: 500;
+    padding: 4px;
+  }
+  .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+  .btn-row button { flex: 1; }
+  .big-timer {
+    font-size: 2.6rem;
+    font-weight: 700;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .big-timer.done { color: var(--accent-2); }
+  .big-money {
+    font-size: 2.2rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--accent-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .sub {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-top: 6px;
+  }
+  .progress {
+    margin-top: 16px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--border);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tabs button { flex: 1; background: var(--bg); color: var(--muted); }
+  .tabs button.active { background: var(--accent); color: white; }
+  .alert {
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+  }
+  .alert.success {
+    background: #dcfce7;
+    color: #166534;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  th { color: var(--muted); font-weight: 600; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  th.num { text-align: right; }
+  .table-wrap { overflow-x: auto; }
+  .empty { color: var(--muted); font-size: 0.9rem; text-align: center; padding: 12px 0; }
+  .export-row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .export-row button { flex: 1; min-width: 100px; }
+  .del-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 2px 6px;
+  }
+  .del-btn:hover { color: var(--danger); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+  <div class="app">
+    <h1>⏱️ Arbeitszeit</h1>
+
+    <!-- AUTH VIEW -->
+    <section id="authView">
+      <div class="card">
+        <div class="tabs">
+          <button type="button" id="tabLogin" class="active">Anmelden</button>
+          <button type="button" id="tabRegister">Registrieren</button>
+        </div>
+        <div id="authAlert"></div>
+
+        <form id="loginForm">
+          <label>Benutzername
+            <input type="text" id="loginUsername" autocomplete="username" required>
+          </label>
+          <label>Passwort
+            <input type="password" id="loginPassword" autocomplete="current-password" required>
+          </label>
+          <button type="submit" class="block">Anmelden</button>
+        </form>
+
+        <form id="registerForm" hidden>
+          <label>Benutzername
+            <input type="text" id="registerUsername" autocomplete="username" required>
+          </label>
+          <label>Passwort (mind. 8 Zeichen)
+            <input type="password" id="registerPassword" autocomplete="new-password" required>
+          </label>
+          <button type="submit" class="block">Konto erstellen</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- APP VIEW -->
+    <section id="appView" hidden>
+      <div class="topbar">
+        <span>Angemeldet als <strong id="currentUsername"></strong></span>
+        <div class="actions">
+          <button type="button" class="link" id="changePasswordBtn">Passwort ändern</button>
+          <button type="button" class="link" id="logoutBtn">Abmelden</button>
+        </div>
+      </div>
+
+      <div id="appAlert"></div>
+
+      <!-- Passwort ändern -->
+      <section class="card" id="changePasswordCard" hidden>
+        <h2>Passwort ändern</h2>
+        <form id="changePasswordForm">
+          <label>Aktuelles Passwort
+            <input type="password" id="currentPassword" autocomplete="current-password" required>
+          </label>
+          <label>Neues Passwort (mind. 8 Zeichen)
+            <input type="password" id="newPassword" autocomplete="new-password" required>
+          </label>
+          <div class="btn-row">
+            <button type="submit">Speichern</button>
+            <button type="button" class="secondary" id="cancelChangePassword">Abbrechen</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Einstellungen -->
+      <section class="card" id="setupCard">
+        <h2>Einstellungen</h2>
+        <label>Arbeitsbeginn
+          <input type="time" id="startTime">
+        </label>
+        <label>Arbeitsdauer (Stunden, ohne Pause)
+          <input type="number" id="duration" step="0.25" min="0" value="8">
+        </label>
+        <fieldset>
+          <legend>Pause</legend>
+          <label>Pause ab
+            <input type="time" id="breakStart" value="12:00">
+          </label>
+          <label>Pausendauer (Minuten)
+            <input type="number" id="breakMinutes" min="0" step="5" value="30">
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Gehalt</legend>
+          <div class="radio-row">
+            <label><input type="radio" name="salaryType" value="monthly" checked> Monatsgehalt</label>
+            <label><input type="radio" name="salaryType" value="yearly"> Jahresgehalt</label>
+          </div>
+          <label>Betrag (€ brutto)
+            <input type="number" id="salaryAmount" min="0" step="10" placeholder="z.B. 3500">
+          </label>
+          <label>Vertragliche Wochenstunden
+            <input type="number" id="weeklyHours" min="1" step="0.5" value="40">
+          </label>
+        </fieldset>
+        <button id="saveSettingsBtn" class="block">Einstellungen speichern</button>
+        <button id="startBtn" class="block secondary" style="margin-top:8px;">Arbeitstag starten</button>
+      </section>
+
+      <!-- Status -->
+      <section class="card" id="statusCard" hidden>
+        <h2>Bis Feierabend</h2>
+        <div class="big-timer" id="countdown">--:--:--</div>
+        <div class="sub">Feierabend um <span id="feierabendTime"></span> Uhr (inkl. Pause)</div>
+        <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="btn-row">
+          <button id="finishBtn">Tag abschließen</button>
+          <button id="cancelBtn" class="secondary">Verwerfen</button>
+        </div>
+      </section>
+
+      <!-- Verdienst -->
+      <section class="card" id="earningsCard" hidden>
+        <h2>Verdienst heute</h2>
+        <div class="big-money" id="earnedAmount">0,00 €</div>
+        <div class="sub" id="breakNote"></div>
+        <div class="sub">Stundenlohn: <span id="hourlyRate">–</span> €/h</div>
+      </section>
+
+      <!-- Protokoll / Verlauf -->
+      <section class="card">
+        <h2>Protokoll</h2>
+        <div class="table-wrap">
+          <table id="historyTable">
+            <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Start</th>
+                <th>Ende</th>
+                <th class="num">Pause</th>
+                <th class="num">Gearbeitet</th>
+                <th class="num">Verdienst</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="historyBody"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="historyEmpty" hidden>Noch keine Einträge.</div>
+
+        <div class="export-row">
+          <button class="secondary" id="exportCsv">CSV exportieren</button>
+          <button class="secondary" id="exportXml">XML exportieren</button>
+          <button class="secondary" id="exportXlsx">Excel exportieren</button>
+        </div>
+      </section>
+    </section>
+  </div>
+
+<script src="app.js" defer></script>
+</body>
+</html>
