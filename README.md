@@ -1,90 +1,88 @@
-# Arbeitszeit-App
+# Arbeitszeit-App (Work-Time Tracker)
 
-🇬🇧 [English version](README.en.md)
+🇩🇪 [Deutsche Version](README.de.md)
 
-Web-App zum Tracken der Arbeitszeit mit Mehrbenutzer-Login: Countdown bis
-Feierabend (inkl. Pause), Live-Verdienst-Counter, ein Protokoll aller
-vergangenen Arbeitstage und Export als CSV, XML oder Excel. Die Oberfläche
-gibt es auf Deutsch und Englisch, dazu drei Themes (Hell, Dunkel, Platine).
+A self-hosted web app for tracking work hours with multi-user login: a
+countdown to the end of your workday (including your break), a live
+earnings counter, a log of past workdays, and export as CSV, XML or Excel.
+The UI is available in German and English, plus three themes (Light, Dark,
+PCB).
 
-## Sicherheit / Datenschutz
+## Security / privacy
 
-- Passwörter werden nur als bcrypt-Hash gespeichert, nie im Klartext.
-- Jeder Nutzer hat einen eigenen zufälligen Datenschlüssel (DEK). Dieser wird
-  beim Login aus dem Passwort abgeleitet und ausschließlich im Arbeitsspeicher
-  des Servers gehalten (nie auf Platte). Alle Einstellungen und Protokoll-
-  Einträge werden mit AES-256-GCM verschlüsselt gespeichert – ohne das
-  richtige Passwort sind die Daten eines Nutzers auch mit Zugriff auf die
-  Datendatei nicht lesbar.
-- Ein Nutzer kann ausschließlich seine eigenen Daten abrufen, ändern,
-  löschen oder exportieren.
-- Die Datei mit den Passwort-Hashes und verschlüsselten Nutzerdaten
-  (`data/db.json`) liegt nur in einem Docker-Volume auf dem Pi und wird
-  über `.gitignore`/`.dockerignore` **nicht** ins Repository übernommen.
-- Die App läuft nur im lokalen Netzwerk über HTTP (kein Internet-Zugriff,
-  kein HTTPS). Für ein rein privates Heimnetz ist das ein akzeptabler
-  Kompromiss – bei Bedarf lässt sich später ein Reverse-Proxy mit TLS
-  davorsetzen.
+- Passwords are stored only as bcrypt hashes, never in plain text.
+- Each user has their own random data-encryption key (DEK). It is derived
+  from the password at login time and kept only in the server's memory
+  (never written to disk). All settings and log entries are stored
+  encrypted with AES-256-GCM — without the correct password, a user's data
+  is unreadable even with access to the data file.
+- A user can only ever read, change, delete or export their own data.
+- The file holding password hashes and encrypted user data
+  (`data/db.json`) lives only in a Docker volume on the Pi and is excluded
+  from the repository via `.gitignore`/`.dockerignore`.
+- The app is served over plain HTTP on the local network only (no internet
+  access, no HTTPS). For a private home network that's an acceptable
+  trade-off — a reverse proxy with TLS can be added in front of it later
+  if needed.
 
-## Lokal mit Docker starten
+## Run locally with Docker
 
 ```bash
 cp .env.example .env
-# In .env einen zufälligen SESSION_SECRET eintragen, z.B.:
+# Put a random SESSION_SECRET into .env, e.g.:
 openssl rand -hex 32
 docker compose up -d --build
 ```
 
-Danach ist die App unter [http://localhost:8080](http://localhost:8080)
-erreichbar.
+The app is then reachable at [http://localhost:8080](http://localhost:8080).
 
-## Deployment auf dem Raspberry Pi
+## Deploying to a Raspberry Pi
 
-Auf dem Pi muss nur Docker (inkl. Compose-Plugin) installiert sein. Das
-Image wird direkt auf dem Pi gebaut, die Prozessor-Architektur (ARM) ist
-dadurch kein Thema.
+The Pi only needs Docker (with the Compose plugin) installed. The image is
+built directly on the Pi, so the processor architecture (ARM) is a
+non-issue.
 
 ```bash
 git clone <repo-url>
 cd arbeitszeit-app
 cp .env.example .env
-# SESSION_SECRET in .env setzen (siehe oben)
+# set SESSION_SECRET in .env (see above)
 docker compose up -d --build
 ```
 
-Die App läuft danach dauerhaft im Hintergrund (`restart: unless-stopped`)
-und ist im lokalen Netzwerk unter `http://<pi-ip>:8080` erreichbar.
+The app then runs permanently in the background (`restart: unless-stopped`)
+and is reachable on the local network at `http://<pi-ip>:8080`.
 
-Nutzerdaten liegen im benannten Docker-Volume `arbeitszeit-data` und
-überleben damit `docker compose up -d --build`. Ein `docker compose down -v`
-löscht dagegen auch das Volume und damit alle Accounts/Protokolle.
+User data lives in the named Docker volume `arbeitszeit-data` and survives
+`docker compose up -d --build`. Running `docker compose down -v` does
+remove the volume, and with it all accounts/logs.
 
-### Update nach Änderungen
+### Updating after changes
 
 ```bash
 git pull
 docker compose up -d --build
 ```
 
-Bestehende Accounts und Protokolle bleiben dabei erhalten (Daten liegen im
-Volume, nicht im Image).
+Existing accounts and logs are preserved (data lives in the volume, not
+in the image).
 
-## Nutzung
+## Usage
 
-- Registrierung ist offen: jeder mit Zugriff auf die App-URL im Heimnetz
-  kann sich selbst ein Konto anlegen.
-- Nach dem Login: Einstellungen (Arbeitsdauer, Pause, Gehalt) speichern,
-  dann "Arbeitstag starten". Der Countdown und Verdienst-Counter laufen
-  live; "Tag abschließen" schreibt den Tag mit der tatsächlichen Endzeit
-  ins Protokoll.
-- Im Protokoll-Bereich lassen sich vergangene Tage einsehen, einzelne
-  Einträge löschen und die komplette Historie als CSV, XML oder Excel
-  (mit Formatierung und Summenzeile) exportieren.
-- Passwort ändern ist über den Link oben rechts möglich.
-- Sprache (DE/EN) und Theme (Hell/Dunkel/Platine) lassen sich oben über die
-  zwei Auswahlfelder umschalten; die Wahl wird pro Browser gespeichert und
-  gilt auch schon auf dem Login-Bildschirm.
+- Registration is open: anyone with access to the app URL on the home
+  network can create their own account.
+- After logging in: save your settings (work duration, break, salary),
+  then click "Start workday". The countdown and earnings counter update
+  live; "Finish workday" writes the day to the log with the actual end
+  time.
+- The log section lets you review past days, delete individual entries,
+  and export the full history as CSV, XML or Excel (formatted, with a
+  totals row).
+- Change your password via the link in the top right.
+- Language (DE/EN) and theme (Light/Dark/PCB) can be switched using the
+  two dropdowns at the top; the choice is saved per browser and already
+  applies on the login screen.
 
-## Lizenz
+## License
 
-MIT, siehe [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE).
