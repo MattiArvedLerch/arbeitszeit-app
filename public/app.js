@@ -101,8 +101,21 @@
     return data;
   }
 
+  const ALERT_AUTO_HIDE_MS = 10000;
+  const alertTimers = new WeakMap();
+
   function showAlert(container, message, type = 'error') {
+    const existingTimer = alertTimers.get(container);
+    if (existingTimer) clearTimeout(existingTimer);
+
     container.innerHTML = `<div class="alert${type === 'success' ? ' success' : ''}">${message}</div>`;
+
+    if (type === 'success') {
+      const timerId = setTimeout(() => clearAlert(container), ALERT_AUTO_HIDE_MS);
+      alertTimers.set(container, timerId);
+    } else {
+      alertTimers.delete(container);
+    }
   }
 
   function showError(container, err) {
@@ -110,6 +123,11 @@
   }
 
   function clearAlert(container) {
+    const existingTimer = alertTimers.get(container);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+      alertTimers.delete(container);
+    }
     container.innerHTML = '';
   }
 
