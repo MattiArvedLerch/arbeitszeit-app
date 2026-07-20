@@ -45,6 +45,10 @@
     breakMinutes: el('breakMinutes'),
     salaryAmount: el('salaryAmount'),
     weeklyHours: el('weeklyHours'),
+    nightSurchargePercent: el('nightSurchargePercent'),
+    sundaySurchargePercent: el('sundaySurchargePercent'),
+    holidaySurchargePercent: el('holidaySurchargePercent'),
+    highHolidaySurchargePercent: el('highHolidaySurchargePercent'),
     saveSettingsBtn: el('saveSettingsBtn'),
     startBtn: el('startBtn'),
     notifyToggle: el('notifyToggle'),
@@ -426,6 +430,10 @@
     els.breakMinutes.value = s.breakMinutes;
     els.salaryAmount.value = s.salaryAmount || '';
     els.weeklyHours.value = s.weeklyHours;
+    els.nightSurchargePercent.value = s.nightSurchargePercent;
+    els.sundaySurchargePercent.value = s.sundaySurchargePercent;
+    els.holidaySurchargePercent.value = s.holidaySurchargePercent;
+    els.highHolidaySurchargePercent.value = s.highHolidaySurchargePercent;
     setSalaryType(s.salaryType);
     if (!s.active) {
       const now = new Date();
@@ -441,6 +449,10 @@
       salaryType: getSalaryType(),
       salaryAmount: parseFloat(els.salaryAmount.value) || 0,
       weeklyHours: parseFloat(els.weeklyHours.value) || 1,
+      nightSurchargePercent: parseFloat(els.nightSurchargePercent.value) || 0,
+      sundaySurchargePercent: parseFloat(els.sundaySurchargePercent.value) || 0,
+      holidaySurchargePercent: parseFloat(els.holidaySurchargePercent.value) || 0,
+      highHolidaySurchargePercent: parseFloat(els.highHolidaySurchargePercent.value) || 0,
     };
   }
 
@@ -640,7 +652,25 @@
 
   // --- History ---
 
+  const SURCHARGE_TYPES = ['none', 'night', 'sunday', 'holiday', 'highHoliday'];
+  const SURCHARGE_LABEL_KEYS = {
+    none: 'surchargeNone',
+    night: 'surchargeNight',
+    sunday: 'surchargeSunday',
+    holiday: 'surchargeHoliday',
+    highHoliday: 'surchargeHighHoliday',
+  };
+
+  function surchargeOptionsHtml(selected) {
+    return SURCHARGE_TYPES.map(
+      (type) => `<option value="${type}"${type === selected ? ' selected' : ''}>${t(SURCHARGE_LABEL_KEYS[type])}</option>`
+    ).join('');
+  }
+
   function renderRow(entry) {
+    const surchargeType = entry.surchargeType || 'none';
+    const badge =
+      surchargeType !== 'none' ? `<span class="surcharge-badge">${t(SURCHARGE_LABEL_KEYS[surchargeType])}</span>` : '';
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${entry.date}</td>
@@ -648,7 +678,7 @@
       <td>${entry.end}</td>
       <td class="num">${entry.breakMinutes} min</td>
       <td class="num">${formatHM(entry.workedMinutes)}</td>
-      <td class="num${moneyHidden ? ' masked' : ''}">${maskMoney(formatMoney(entry.earnedAmount))}</td>
+      <td class="num${moneyHidden ? ' masked' : ''}">${maskMoney(formatMoney(entry.earnedAmount))}${badge}</td>
       <td>
         <div class="row-actions">
           <button class="edit-btn" title="${t('editEntry')}" data-id="${entry.id}">✎</button>
@@ -671,7 +701,8 @@
       <td><input type="time" class="edit-start" value="${entry.start}"></td>
       <td><input type="time" class="edit-end" value="${entry.end}"></td>
       <td class="num"><input type="number" class="edit-break" min="0" step="5" value="${entry.breakMinutes}"></td>
-      <td class="num" colspan="2"></td>
+      <td class="num"></td>
+      <td><select class="edit-surcharge" title="${t('surchargeType')}">${surchargeOptionsHtml(entry.surchargeType || 'none')}</select></td>
       <td>
         <div class="row-actions">
           <button class="save-edit-btn" title="${t('save')}">✓</button>
@@ -685,6 +716,7 @@
         start: tr.querySelector('.edit-start').value,
         end: tr.querySelector('.edit-end').value,
         breakMinutes: parseFloat(tr.querySelector('.edit-break').value) || 0,
+        surchargeType: tr.querySelector('.edit-surcharge').value,
       };
       clearAlert(els.appAlert);
       try {

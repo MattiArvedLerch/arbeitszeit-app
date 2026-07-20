@@ -9,7 +9,38 @@ const DEFAULT_SETTINGS = {
   salaryAmount: 0,
   weeklyHours: 40,
   active: null, // { date, start } while a work day is running
+  // Surcharge percentages (Zuschlaege), editable - default to the rates from
+  // § 3b EStG (the tax-free thresholds most collective agreements mirror).
+  // These are NOT a general statutory pay entitlement (only night work has
+  // one, via § 6 Abs. 5 ArbZG, and even that names no fixed percentage) -
+  // just a commonly used reference scale, hence configurable per user.
+  nightSurchargePercent: 25,
+  sundaySurchargePercent: 50,
+  holidaySurchargePercent: 125,
+  highHolidaySurchargePercent: 150,
 };
+
+const SURCHARGE_TYPES = ['none', 'night', 'sunday', 'holiday', 'highHoliday'];
+
+function surchargePercentFor(settings, surchargeType) {
+  switch (surchargeType) {
+    case 'night':
+      return settings.nightSurchargePercent;
+    case 'sunday':
+      return settings.sundaySurchargePercent;
+    case 'holiday':
+      return settings.holidaySurchargePercent;
+    case 'highHoliday':
+      return settings.highHolidaySurchargePercent;
+    default:
+      return 0;
+  }
+}
+
+function applySurcharge(baseAmount, settings, surchargeType) {
+  const percent = surchargePercentFor(settings, surchargeType);
+  return Math.round(baseAmount * (1 + percent / 100) * 100) / 100;
+}
 
 function getDecryptedSettings(db, userId, dek) {
   const rec = db.data[userId] && db.data[userId].settings;
@@ -44,7 +75,7 @@ function finishWorkday(mutableDb, userId, dek, endTime) {
   const finalEndTime = endTime || nowHHMM();
   const { date, start } = settings.active;
   const workedMinutes = computeWorkedMinutes(date, start, finalEndTime, settings.breakStart, settings.breakMinutes);
-  const earnedAmount = Math.round(hourlyRateFor(settings) * (workedMinutes / 60) * 100) / 100;
+  const baseAmount = hourlyRateFor(settings) * (workedMinutes / 60);
 
   const entry = {
     date,
@@ -53,7 +84,8 @@ function finishWorkday(mutableDb, userId, dek, endTime) {
     breakMinutes: settings.breakMinutes,
     workedMinutes,
     plannedMinutes: Math.round(settings.duration * 60),
-    earnedAmount,
+    surchargeType: 'none',
+    earnedAmount: applySurcharge(baseAmount, settings, 'none'),
   };
 
   const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -72,9 +104,11 @@ function finishWorkday(mutableDb, userId, dek, endTime) {
 
 module.exports = {
   DEFAULT_SETTINGS,
+  SURCHARGE_TYPES,
   getDecryptedSettings,
   saveSettings,
   hourlyRateFor,
+  applySurcharge,
   startWorkday,
   finishWorkday,
 };

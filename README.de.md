@@ -102,6 +102,16 @@ enthält.
   wird nur einmal angezeigt und kann jederzeit widerrufen/neu generiert
   werden — wie ein zweites Passwort behandeln, da er ohne Login-Session
   auf deine Daten schreiben kann.
+- **Zuschläge**: Gesetzlich fest ist nur ein "angemessener" Nachtzuschlag
+  (§6 ArbZG, ohne festen Prozentsatz); Sonntags- und Feiertagszuschläge
+  hängen komplett vom Tarif-/Arbeitsvertrag ab, kein allgemeiner
+  gesetzlicher Anspruch. Der Bereich "Zuschläge" in den Einstellungen ist
+  standardmäßig auf die steuerfreien Sätze nach §3b EStG gesetzt (Nacht
+  25%, Sonntag 50%, Feiertag 125%, hohe Feiertage wie Weihnachten/
+  Ostersonntag/1. Mai 150%), da viele Tarifverträge diese übernehmen —
+  alle vier Werte sind frei editierbar. Einen abgeschlossenen Tag
+  nachträglich über den ✎-Button im Protokoll markieren — das Dropdown
+  dort berechnet den Verdienst des Eintrags mit dem gewählten Zuschlag neu.
 
 ## Lizenz
 

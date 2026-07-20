@@ -4,7 +4,15 @@ const cryptoUtil = require('../crypto');
 const { requireAuth } = require('../session-keys');
 const { computeWorkedMinutes, todayStr, nowHHMM } = require('../time');
 const { buildCsv, buildXml, buildXlsx } = require('../export');
-const { getDecryptedSettings, saveSettings, hourlyRateFor, startWorkday, finishWorkday } = require('../workday');
+const {
+  getDecryptedSettings,
+  saveSettings,
+  hourlyRateFor,
+  applySurcharge,
+  startWorkday,
+  finishWorkday,
+  SURCHARGE_TYPES,
+} = require('../workday');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -15,6 +23,10 @@ router.get('/settings', (req, res) => {
   res.json(settings);
 });
 
+function isValidPercent(value) {
+  return Number.isFinite(value) && value >= 0 && value <= 300;
+}
+
 router.put('/settings', (req, res) => {
   const body = req.body || {};
   const duration = Number(body.duration);
@@ -23,6 +35,10 @@ router.put('/settings', (req, res) => {
   const salaryAmount = Number(body.salaryAmount);
   const salaryType = body.salaryType === 'yearly' ? 'yearly' : 'monthly';
   const breakStart = typeof body.breakStart === 'string' ? body.breakStart : '12:00';
+  const nightSurchargePercent = Number(body.nightSurchargePercent);
+  const sundaySurchargePercent = Number(body.sundaySurchargePercent);
+  const holidaySurchargePercent = Number(body.holidaySurchargePercent);
+  const highHolidaySurchargePercent = Number(body.highHolidaySurchargePercent);
 
   if (!Number.isFinite(duration) || duration < 0 || duration > 24) {
     return res.status(400).json({ error: 'invalid_duration' });
@@ -36,6 +52,14 @@ router.put('/settings', (req, res) => {
   if (!Number.isFinite(salaryAmount) || salaryAmount < 0) {
     return res.status(400).json({ error: 'invalid_salary_amount' });
   }
+  if (
+    !isValidPercent(nightSurchargePercent) ||
+    !isValidPercent(sundaySurchargePercent) ||
+    !isValidPercent(holidaySurchargePercent) ||
+    !isValidPercent(highHolidaySurchargePercent)
+  ) {
+    return res.status(400).json({ error: 'invalid_surcharge_percent' });
+  }
 
   mutate((mutableDb) => {
     const current = getDecryptedSettings(mutableDb, req.userId, req.dek);
@@ -47,6 +71,10 @@ router.put('/settings', (req, res) => {
       salaryType,
       salaryAmount,
       weeklyHours,
+      nightSurchargePercent,
+      sundaySurchargePercent,
+      holidaySurchargePercent,
+      highHolidaySurchargePercent,
     };
     saveSettings(mutableDb, req.userId, req.dek, next);
   }).then(() => {
@@ -108,6 +136,7 @@ router.patch('/worklog/:id', (req, res) => {
   const start = body.start;
   const end = body.end;
   const breakMinutes = Number(body.breakMinutes);
+  const surchargeType = SURCHARGE_TYPES.includes(body.surchargeType) ? body.surchargeType : 'none';
 
   if (!DATE_RE.test(date) || !TIME_RE.test(start) || !TIME_RE.test(end)) {
     return res.status(400).json({ error: 'invalid_request' });
@@ -124,7 +153,7 @@ router.patch('/worklog/:id', (req, res) => {
     const settings = getDecryptedSettings(mutableDb, req.userId, req.dek);
     const existing = cryptoUtil.decryptJson(logs[idx], req.dek);
     const workedMinutes = computeWorkedMinutes(date, start, end, start, breakMinutes);
-    const earnedAmount = Math.round(hourlyRateFor(settings) * (workedMinutes / 60) * 100) / 100;
+    const baseAmount = hourlyRateFor(settings) * (workedMinutes / 60);
 
     const entry = {
       date,
@@ -133,7 +162,8 @@ router.patch('/worklog/:id', (req, res) => {
       breakMinutes,
       workedMinutes,
       plannedMinutes: existing.plannedMinutes,
-      earnedAmount,
+      surchargeType,
+      earnedAmount: applySurcharge(baseAmount, settings, surchargeType),
     };
 
     logs[idx] = {
