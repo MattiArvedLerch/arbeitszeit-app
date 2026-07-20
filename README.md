@@ -100,15 +100,18 @@ a script tends to encode host-specific paths.
   second password, since it can write to your data without a login
   session.
 - **Surcharges (Zuschläge)**: German law only guarantees an "appropriate"
-  night-work surcharge (§6 ArbZG, no fixed percentage); Sunday and holiday
-  surcharges depend entirely on your collective/employment agreement, not
-  a general legal entitlement. The "Surcharges" section in Settings
-  defaults to the tax-free rates under §3b EStG (night 25%, Sunday 50%,
-  holiday 125%, high holidays like Christmas/Easter Sunday/May 1st 150%)
-  since many agreements mirror them, but all four are freely editable.
-  Mark a completed day retroactively via its edit (✎) button in the log —
-  the dropdown there recalculates that entry's earnings with the selected
-  surcharge on top.
+  night-work surcharge (§6 ArbZG, no fixed percentage); Sunday, holiday and
+  overtime surcharges depend entirely on your collective/employment
+  agreement, not a general legal entitlement. The "Surcharges" section in
+  Settings defaults to the tax-free rates under §3b EStG (night 25%,
+  Sunday 50%, holiday 125%, high holidays like Christmas/Easter
+  Sunday/May 1st 150%) since many agreements mirror them, plus overtime
+  at 25% (not covered by §3b, just a common contractual reference point)
+  — all five are freely editable. Mark a completed day retroactively via
+  its edit (✎) button in the log: check any combination of the five
+  categories (holiday and high holiday are mutually exclusive, the rest
+  combine freely) — the percentages add up rather than compound and
+  recalculate that entry's earnings immediately.
 
 ## License
 

@@ -103,15 +103,19 @@ enthält.
   werden — wie ein zweites Passwort behandeln, da er ohne Login-Session
   auf deine Daten schreiben kann.
 - **Zuschläge**: Gesetzlich fest ist nur ein "angemessener" Nachtzuschlag
-  (§6 ArbZG, ohne festen Prozentsatz); Sonntags- und Feiertagszuschläge
-  hängen komplett vom Tarif-/Arbeitsvertrag ab, kein allgemeiner
-  gesetzlicher Anspruch. Der Bereich "Zuschläge" in den Einstellungen ist
-  standardmäßig auf die steuerfreien Sätze nach §3b EStG gesetzt (Nacht
-  25%, Sonntag 50%, Feiertag 125%, hohe Feiertage wie Weihnachten/
-  Ostersonntag/1. Mai 150%), da viele Tarifverträge diese übernehmen —
-  alle vier Werte sind frei editierbar. Einen abgeschlossenen Tag
-  nachträglich über den ✎-Button im Protokoll markieren — das Dropdown
-  dort berechnet den Verdienst des Eintrags mit dem gewählten Zuschlag neu.
+  (§6 ArbZG, ohne festen Prozentsatz); Sonntags-, Feiertags- und
+  Überstundenzuschläge hängen komplett vom Tarif-/Arbeitsvertrag ab, kein
+  allgemeiner gesetzlicher Anspruch. Der Bereich "Zuschläge" in den
+  Einstellungen ist standardmäßig auf die steuerfreien Sätze nach §3b
+  EStG gesetzt (Nacht 25%, Sonntag 50%, Feiertag 125%, hohe Feiertage wie
+  Weihnachten/Ostersonntag/1. Mai 150%), plus Überstunden mit 25% (nicht
+  durch §3b abgedeckt, nur ein üblicher vertraglicher Richtwert) — alle
+  fünf Werte sind frei editierbar. Einen abgeschlossenen Tag nachträglich
+  über den ✎-Button im Protokoll markieren: beliebige Kombination der
+  fünf Kategorien ankreuzen (Feiertag und Hoher Feiertag schließen sich
+  gegenseitig aus, der Rest lässt sich frei kombinieren) — die Prozente
+  addieren sich statt zu multiplizieren und der Verdienst des Eintrags
+  wird sofort neu berechnet.
 
 ## Lizenz
 
