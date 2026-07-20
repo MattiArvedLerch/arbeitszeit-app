@@ -69,17 +69,13 @@ in the image).
 
 ### Backups
 
-`scripts/backup-db.sh` copies the running container's `data/db.json`
-(password hashes + encrypted settings/log entries) to a timestamped file
-and keeps the newest 14 copies. Run it via cron on the host, e.g.:
-
-```cron
-0 3 * * * /home/<user>/arbeitszeit-app/scripts/backup-db.sh >> /home/<user>/arbeitszeit-app/backup.log 2>&1
-```
-
-Point `BACKUP_DIR` in the script at storage that is physically separate
-from the boot medium (e.g. an attached USB drive), so a corrupted SD card
-doesn't take out the backups with it.
+Set up a periodic job on the host that copies the running container's
+`data/db.json` (password hashes + encrypted settings/log entries) to
+storage that is physically separate from the boot medium (e.g. an
+attached USB drive), so a corrupted SD card doesn't take out the backups
+with it — e.g. `docker cp arbeitszeit-app:/app/data/db.json <destination>`
+on a cron schedule. Kept out of this repository intentionally, since such
+a script tends to encode host-specific paths.
 
 ## Usage
 

@@ -71,18 +71,14 @@ Volume, nicht im Image).
 
 ### Backups
 
-`scripts/backup-db.sh` kopiert die `data/db.json` (Passwort-Hashes +
-verschlüsselte Einstellungen/Log-Einträge) des laufenden Containers in eine
-Datei mit Zeitstempel und behält die neuesten 14 Kopien. Per Cronjob auf
-dem Host ausführen, z.B.:
-
-```cron
-0 3 * * * /home/<user>/arbeitszeit-app/scripts/backup-db.sh >> /home/<user>/arbeitszeit-app/backup.log 2>&1
-```
-
-`BACKUP_DIR` im Skript sollte auf ein physisch getrenntes Speichermedium
-zeigen (z.B. eine angeschlossene USB-Platte), damit eine defekte SD-Karte
-nicht auch die Backups mitreißt.
+Auf dem Host einen periodischen Job einrichten, der die `data/db.json`
+(Passwort-Hashes + verschlüsselte Einstellungen/Log-Einträge) des
+laufenden Containers auf ein physisch getrenntes Speichermedium kopiert
+(z.B. eine angeschlossene USB-Platte), damit eine defekte SD-Karte nicht
+auch die Backups mitreißt — z.B. per Cronjob mit
+`docker cp arbeitszeit-app:/app/data/db.json <Ziel>`. Bewusst nicht Teil
+dieses Repos, da so ein Skript typischerweise host-spezifische Pfade
+enthält.
 
 ## Nutzung
 
