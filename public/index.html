@@ -493,6 +493,7 @@
       <div class="topbar">
         <span><span data-i18n="loggedInAs">Angemeldet als</span> <strong id="currentUsername"></strong></span>
         <div class="actions">
+          <button type="button" class="link" id="surchargesBtn" data-i18n="surcharges">Zuschläge</button>
           <button type="button" class="link" id="apiTokenBtn" data-i18n="apiTokenManage">API-Token</button>
           <button type="button" class="link" id="changePasswordBtn" data-i18n="changePassword">Passwort ändern</button>
           <button type="button" class="link" id="logoutBtn" data-i18n="logout">Abmelden</button>
@@ -536,6 +537,31 @@
         <button type="button" class="secondary block" id="closeApiTokenCard" style="margin-top:8px;" data-i18n="cancel">Abbrechen</button>
       </section>
 
+      <!-- Zuschläge -->
+      <section class="card" id="surchargesCard" hidden>
+        <h2 data-i18n="surcharges">Zuschläge</h2>
+        <p class="sub" style="text-align:left;margin:0 0 12px;" data-i18n="surchargesHint"></p>
+        <label data-i18n="nightSurcharge">Nachtarbeit (%)
+          <input type="number" id="nightSurchargePercent" min="0" max="300" step="1" value="25">
+        </label>
+        <label data-i18n="sundaySurcharge">Sonntagsarbeit (%)
+          <input type="number" id="sundaySurchargePercent" min="0" max="300" step="1" value="50">
+        </label>
+        <label data-i18n="holidaySurcharge">Feiertagsarbeit (%)
+          <input type="number" id="holidaySurchargePercent" min="0" max="300" step="1" value="125">
+        </label>
+        <label data-i18n="highHolidaySurcharge">Hoher Feiertag (%)
+          <input type="number" id="highHolidaySurchargePercent" min="0" max="300" step="1" value="150">
+        </label>
+        <label data-i18n="overtimeSurcharge">Überstunden (%)
+          <input type="number" id="overtimeSurchargePercent" min="0" max="300" step="1" value="25">
+        </label>
+        <div class="btn-row">
+          <button type="button" id="saveSurchargesBtn" data-i18n="save">Speichern</button>
+          <button type="button" class="secondary" id="closeSurchargesCard" data-i18n="cancel">Abbrechen</button>
+        </div>
+      </section>
+
       <!-- Einstellungen -->
       <section class="card" id="setupCard">
         <h2 data-i18n="settings">Einstellungen</h2>
@@ -565,25 +591,6 @@
           </label>
           <label data-i18n="weeklyHours">Vertragliche Wochenstunden
             <input type="number" id="weeklyHours" min="1" step="0.5" value="40">
-          </label>
-        </fieldset>
-        <fieldset>
-          <legend data-i18n="surcharges">Zuschläge</legend>
-          <p class="sub" style="text-align:left;margin:0 0 12px;" data-i18n="surchargesHint"></p>
-          <label data-i18n="nightSurcharge">Nachtarbeit (%)
-            <input type="number" id="nightSurchargePercent" min="0" max="300" step="1" value="25">
-          </label>
-          <label data-i18n="sundaySurcharge">Sonntagsarbeit (%)
-            <input type="number" id="sundaySurchargePercent" min="0" max="300" step="1" value="50">
-          </label>
-          <label data-i18n="holidaySurcharge">Feiertagsarbeit (%)
-            <input type="number" id="holidaySurchargePercent" min="0" max="300" step="1" value="125">
-          </label>
-          <label data-i18n="highHolidaySurcharge">Hoher Feiertag (%)
-            <input type="number" id="highHolidaySurchargePercent" min="0" max="300" step="1" value="150">
-          </label>
-          <label data-i18n="overtimeSurcharge">Überstunden (%)
-            <input type="number" id="overtimeSurchargePercent" min="0" max="300" step="1" value="25">
           </label>
         </fieldset>
         <label class="checkbox-row">

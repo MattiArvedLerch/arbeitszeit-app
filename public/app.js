@@ -38,6 +38,11 @@
     apiTokenRevokeBtn: el('apiTokenRevokeBtn'),
     closeApiTokenCard: el('closeApiTokenCard'),
 
+    surchargesBtn: el('surchargesBtn'),
+    surchargesCard: el('surchargesCard'),
+    saveSurchargesBtn: el('saveSurchargesBtn'),
+    closeSurchargesCard: el('closeSurchargesCard'),
+
     setupCard: el('setupCard'),
     startTime: el('startTime'),
     duration: el('duration'),
@@ -389,6 +394,25 @@
     els.apiTokenCard.hidden = true;
   });
 
+  els.surchargesBtn.addEventListener('click', () => {
+    els.surchargesCard.hidden = false;
+    els.surchargesCard.scrollIntoView({ behavior: 'smooth' });
+  });
+
+  els.closeSurchargesCard.addEventListener('click', () => {
+    els.surchargesCard.hidden = true;
+  });
+
+  els.saveSurchargesBtn.addEventListener('click', async () => {
+    clearAlert(els.appAlert);
+    try {
+      await api('/settings', { method: 'PUT', body: readSettingsForm() });
+      showAlert(els.appAlert, t('settingsSaved'), 'success');
+    } catch (err) {
+      showError(els.appAlert, err);
+    }
+  });
+
   els.apiTokenGenerateBtn.addEventListener('click', async () => {
     clearAlert(els.appAlert);
     try {
@@ -485,9 +509,39 @@
     renderWorkdayState();
   });
 
-  els.finishBtn.addEventListener('click', async () => {
+  const LATE_FINISH_THRESHOLD_MS = 30 * 60000;
+
+  // If finishing well past the planned Feierabend, ask whether that's
+  // genuine overtime or a forgotten clock-out - and if the latter, let the
+  // user correct the end time right away instead of logging a bogus long day.
+  function resolveFinishEndTime() {
     const now = new Date();
-    const endTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const nowHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    if (!settings || !settings.active) return nowHHMM;
+
+    const { date, start } = settings.active;
+    const startD = getStartDate(date, start);
+    const plannedFeierabend = new Date(
+      startD.getTime() + settings.duration * 3600000 + (settings.breakMinutes || 0) * 60000
+    );
+    if (now - plannedFeierabend <= LATE_FINISH_THRESHOLD_MS) return nowHHMM;
+
+    const plannedStr = plannedFeierabend.toLocaleTimeString(window.i18n.locale(), { hour: '2-digit', minute: '2-digit' });
+    const isOvertime = confirm(t('lateFinishConfirm', { planned: plannedStr, actual: nowHHMM }));
+    if (isOvertime) return nowHHMM;
+
+    const corrected = prompt(t('lateFinishPromptCorrectTime'), plannedStr);
+    if (corrected === null) return null; // user backed out entirely
+    if (!/^\d{2}:\d{2}$/.test(corrected.trim())) {
+      showAlert(els.appAlert, t('invalidTimeFormat'));
+      return null;
+    }
+    return corrected.trim();
+  }
+
+  els.finishBtn.addEventListener('click', async () => {
+    const endTime = resolveFinishEndTime();
+    if (endTime === null) return;
     const entry = await api('/workday/finish', { method: 'POST', body: { endTime } });
     settings.active = null;
     fillSettingsForm(settings);

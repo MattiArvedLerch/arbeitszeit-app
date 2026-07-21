@@ -97,6 +97,10 @@ window.i18n = (function () {
       passwordChanged: 'Passwort geändert.',
       dayCompleted: 'Tag gespeichert: {duration} gearbeitet, {amount} verdient.',
       entryUpdated: 'Eintrag aktualisiert.',
+      lateFinishConfirm:
+        'Dein Feierabend wäre um {planned} Uhr gewesen, du schließt jetzt erst um {actual} Uhr ab.\n\nOK = Ja, das waren Überstunden.\nAbbrechen = Nein, ich habe vergessen mich auszustempeln.',
+      lateFinishPromptCorrectTime: 'Wann hast du wirklich Feierabend gemacht? (HH:MM)',
+      invalidTimeFormat: 'Ungültiges Zeitformat, bitte HH:MM verwenden.',
 
       apiTokenManage: 'API-Token',
       apiTokenTitle: 'API-Token für Kurzbefehle',
@@ -226,6 +230,10 @@ window.i18n = (function () {
       passwordChanged: 'Password changed.',
       dayCompleted: 'Day saved: {duration} worked, {amount} earned.',
       entryUpdated: 'Entry updated.',
+      lateFinishConfirm:
+        'Your workday should have ended at {planned}, but you\'re finishing at {actual} now.\n\nOK = Yes, that was overtime.\nCancel = No, I forgot to clock out.',
+      lateFinishPromptCorrectTime: 'When did you actually finish? (HH:MM)',
+      invalidTimeFormat: 'Invalid time format, please use HH:MM.',
 
       apiTokenManage: 'API token',
       apiTokenTitle: 'API token for Shortcuts',
