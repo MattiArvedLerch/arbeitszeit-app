@@ -291,8 +291,13 @@
     font-size: 0.9rem;
     margin-top: 6px;
   }
+  .progress-wrap {
+    position: relative;
+    margin-top: 28px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
   .progress {
-    margin-top: 16px;
     height: 8px;
     border-radius: 999px;
     background: var(--border);
@@ -303,6 +308,31 @@
     background: var(--accent);
     width: 0%;
     transition: width 0.3s ease;
+  }
+  .progress-bubble {
+    position: absolute;
+    bottom: 100%;
+    left: 0%;
+    transform: translateX(-50%);
+    margin-bottom: 9px;
+    background: var(--text);
+    color: var(--bg);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+    pointer-events: none;
+    transition: left 0.3s ease;
+  }
+  .progress-bubble::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--text);
   }
   .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
   .tabs button { flex: 1; background: var(--bg); color: var(--muted); }
@@ -606,7 +636,10 @@
         <h2 data-i18n="untilQuittingTime">Bis Feierabend</h2>
         <div class="big-timer" id="countdown">--:--:--</div>
         <div class="sub"><span data-i18n="quittingTimeAt">Feierabend um</span> <span id="feierabendTime"></span> <span data-i18n="quittingTimeSuffix">Uhr (inkl. Pause)</span></div>
-        <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-wrap" id="progressWrap">
+          <div class="progress-bubble" id="progressBubble">0%</div>
+          <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
         <div class="btn-row">
           <button id="finishBtn" data-i18n="finishWorkday">Tag abschließen</button>
           <button id="cancelBtn" class="secondary" data-i18n="discard">Verwerfen</button>

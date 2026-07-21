@@ -62,7 +62,9 @@
     statusCard: el('statusCard'),
     countdown: el('countdown'),
     feierabendTime: el('feierabendTime'),
+    progressWrap: el('progressWrap'),
     progressFill: el('progressFill'),
+    progressBubble: el('progressBubble'),
     finishBtn: el('finishBtn'),
     cancelBtn: el('cancelBtn'),
 
@@ -88,6 +90,7 @@
   let settings = null;
   let tickInterval = null;
   let notifiedThisSession = false;
+  let progressShowRemaining = false;
 
   async function api(path, options = {}) {
     const res = await fetch('/api' + path, {
@@ -509,6 +512,11 @@
     renderWorkdayState();
   });
 
+  els.progressWrap.addEventListener('click', () => {
+    progressShowRemaining = !progressShowRemaining;
+    tick();
+  });
+
   const LATE_FINISH_THRESHOLD_MS = 30 * 60000;
 
   // If finishing well past the planned Feierabend, ask whether that's
@@ -628,6 +636,8 @@
     const rawElapsedMs = Math.min(Math.max(now - startD, 0), totalWindowMs);
     const progressPct = totalWindowMs > 0 ? (rawElapsedMs / totalWindowMs) * 100 : 0;
     els.progressFill.style.width = progressPct + '%';
+    els.progressBubble.style.left = progressPct + '%';
+    els.progressBubble.textContent = `${(progressShowRemaining ? 100 - progressPct : progressPct).toFixed(1)}%`;
 
     let workedMs;
     if (now <= breakStart) {
